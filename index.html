@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Creator Toolkit — fast, private tools for making content</title>
+<style>
+ :root{--bg:#0c0e10;--panel:#14171a;--line:#242a2f;--txt:#e9edef;--mut:#93a0a6;--acc:#5b8def;}
+ *{box-sizing:border-box;margin:0}
+ body{font:16px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;background:var(--bg);color:var(--txt)}
+ .wrap{max-width:1000px;margin:0 auto;padding:0 24px}
+ header{padding:22px 0;display:flex;align-items:center;gap:10px}
+ header b{font-size:20px}
+ .hero{text-align:center;padding:64px 0 30px}
+ .hero h1{font-size:clamp(30px,5vw,50px);line-height:1.1;letter-spacing:-1px;margin-bottom:16px}
+ .hero p{font-size:19px;color:var(--mut);max-width:620px;margin:0 auto}
+ .badge{display:inline-block;background:#131c2e;border:1px solid #24365c;color:#9dbcff;padding:6px 14px;border-radius:20px;font-size:13px;margin-bottom:22px}
+ .grid{display:grid;grid-template-columns:repeat(2,1fr);gap:18px;padding:40px 0 60px}
+ @media(max-width:700px){.grid{grid-template-columns:1fr}}
+ .tool{display:block;text-decoration:none;color:inherit;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:24px;transition:border-color .15s,transform .15s}
+ .tool:hover{border-color:var(--acc);transform:translateY(-2px)}
+ .tool .ic{font-size:26px}
+ .tool h3{margin:10px 0 6px;font-size:19px}
+ .tool p{color:var(--mut);font-size:15px;margin-bottom:10px}
+ .tool .go{color:var(--acc);font-size:14px;font-weight:600}
+ .soon{opacity:.55}.soon:hover{transform:none;border-color:var(--line)}
+ .soon .go{color:var(--mut)}
+ .why{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;padding:0 0 60px}
+ @media(max-width:700px){.why{grid-template-columns:1fr}}
+ .why div{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:18px;font-size:14px;color:var(--mut)}
+ .why b{color:var(--txt);display:block;margin-bottom:4px}
+ footer{text-align:center;color:var(--mut);padding:30px 0;font-size:14px;border-top:1px solid var(--line)}
+</style>
+</head>
+<body>
+<div class="wrap">
+ <header><b>✦ Creator Toolkit</b><span style="flex:1"></span><span style="color:var(--mut);font-size:13px">one-time · private · in your browser</span></header>
+
+ <section class="hero">
+   <span class="badge">◆ Tools for people who make things</span>
+   <h1>Fast, private tools for<br>creating &amp; publishing content.</h1>
+   <p>A growing kit of focused tools that make creating, editing, and shipping content easier — no subscriptions, no uploads, no bloat. Buy once, use forever.</p>
+ </section>
+
+ <section class="grid" id="tools">
+   <a class="tool" href="https://shotpine.com">
+     <div class="ic">▲</div><h3>Shotpine</h3>
+     <p>Turn plain screenshots into scroll-stopping visuals — gradients, frames, shadows, in two clicks.</p>
+     <span class="go">Open Shotpine →</span>
+   </a>
+   <a class="tool" href="https://cropine.com">
+     <div class="ic">◧</div><h3>Cropine</h3>
+     <p>Batch resize &amp; convert a whole folder of images at once — every size, HEIC included, nothing uploaded.</p>
+     <span class="go">Open Cropine →</span>
+   </a>
+   <div class="tool soon">
+     <div class="ic">✦</div><h3>More coming</h3>
+     <p>New creator tools ship regularly — always focused, always one-time pricing.</p>
+     <span class="go">In the works</span>
+   </div>
+ </section>
+
+ <section class="why">
+   <div><b>No subscriptions</b>Buy once, own it. No monthly bill to make a thumbnail.</div>
+   <div><b>Nothing uploaded</b>Everything runs in your browser. Your files never leave your device.</div>
+   <div><b>Made for creators</b>Each tool does one job fast, so you can get back to creating.</div>
+ </section>
+
+ <footer>Creator Toolkit — fast, private tools for making content.</footer>
+</div>
+</body>
+</html>
