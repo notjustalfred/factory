@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Slidepine — Make carousel posts in your browser, no sign-up</title>
+<script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+<style>
+  :root{--bg:#0f1214;--panel:#171b1e;--line:#262c30;--txt:#e7ecee;--mut:#94a1a6;--acc:#c8622d;}
+  *{box-sizing:border-box}
+  body{margin:0;font:14px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;background:var(--bg);color:var(--txt);height:100vh;display:flex;flex-direction:column}
+  header{display:flex;align-items:center;gap:10px;padding:10px 16px;border-bottom:1px solid var(--line)}
+  header b{font-size:16px}.tag{color:var(--mut);font-size:12px}
+  .wrap{flex:1;display:flex;min-height:0}
+  aside{width:330px;padding:14px;border-right:1px solid var(--line);overflow:auto;background:var(--panel)}
+  main{flex:1;display:flex;flex-direction:column;min-width:0}
+  #stage{flex:1;display:flex;align-items:center;justify-content:center;overflow:auto;padding:20px;background:#0b0e0f}
+  #preview{max-height:100%;max-width:100%;box-shadow:0 20px 60px rgba(0,0,0,.5);border-radius:6px}
+  #thumbs{display:flex;gap:8px;padding:10px 14px;overflow-x:auto;border-top:1px solid var(--line);background:var(--panel)}
+  .thumb{position:relative;flex:0 0 auto;cursor:pointer;border:2px solid transparent;border-radius:6px}
+  .thumb.on{border-color:var(--acc)}
+  .thumb canvas{display:block;width:64px;height:80px;object-fit:cover;border-radius:4px;background:#000}
+  .thumb .del{position:absolute;top:-6px;right:-6px;background:#c8362d;color:#fff;border-radius:50%;width:18px;height:18px;font-size:12px;line-height:18px;text-align:center;cursor:pointer}
+  .thumb .idx{position:absolute;bottom:2px;left:4px;font-size:10px;color:#fff;text-shadow:0 1px 2px #000}
+  .row{margin-bottom:14px}
+  label{display:block;color:var(--mut);font-size:12px;margin-bottom:5px}
+  .sub{font-size:11px;color:var(--mut);text-transform:uppercase;letter-spacing:.5px;margin:16px 0 8px;border-top:1px solid var(--line);padding-top:14px}
+  input[type=text],textarea,select{background:var(--bg);border:1px solid var(--line);color:var(--txt);padding:8px;border-radius:6px;width:100%;font:inherit}
+  textarea{resize:vertical;min-height:90px}
+  .seg{display:flex;gap:6px;flex-wrap:wrap}.seg button{flex:1;padding:7px;background:var(--bg);border:1px solid var(--line);color:var(--txt);border-radius:6px;cursor:pointer;font-size:12px}
+  .seg button.on{background:var(--acc);border-color:var(--acc);color:#fff}
+  .themes{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+  .sw{height:34px;border-radius:6px;cursor:pointer;border:2px solid transparent;font-size:10px;display:flex;align-items:center;justify-content:center;font-weight:600}
+  .sw.on{border-color:#fff}
+  .btn{width:100%;padding:12px;background:var(--acc);border:none;color:#fff;font-weight:600;border-radius:8px;cursor:pointer;font-size:14px;margin-top:8px}
+  .btn:disabled{opacity:.5;cursor:default}
+  .btn.sec{background:var(--bg);border:1px solid var(--line)}
+  .keyrow{display:flex;gap:6px}
+  .hint{font-size:11px;color:var(--mut);margin-top:6px}
+  .pill{font-size:10px;padding:2px 7px;border-radius:20px;background:var(--acc);color:#fff}
+  .pill.free{background:#3a4147}
+  #status{padding:10px 16px;border-top:1px solid var(--line);color:var(--mut);font-size:13px;min-height:20px}
+  .two{display:flex;gap:8px}.two>*{flex:1}
+  a{color:var(--acc)}
+</style>
+</head>
+<body>
+<header>
+  <b>▤ Slidepine</b><span class="tag">Carousel &amp; slide-post maker — 100% in your browser, nothing uploaded</span>
+  <span style="flex:1"></span><span id="count" class="tag"></span>
+  <span id="planPill" class="pill free">FREE</span>
+</header>
+<div class="wrap">
+  <aside>
+    <div class="sub" style="margin-top:0;border:0;padding:0">Slide content</div>
+    <div class="row">
+      <label>Title</label>
+      <input type="text" id="fTitle" placeholder="Slide headline">
+    </div>
+    <div class="row">
+      <label>Body</label>
+      <textarea id="fBody" placeholder="Slide body text…"></textarea>
+    </div>
+    <div class="two">
+      <button class="btn sec" id="addSlide">+ Add slide</button>
+      <button class="btn sec" id="dupSlide">Duplicate</button>
+    </div>
+    <div class="two">
+      <button class="btn sec" id="mvLeft">◀ Move</button>
+      <button class="btn sec" id="mvRight">Move ▶</button>
+    </div>
+
+    <div class="sub">Format</div>
+    <div class="seg" id="formats"></div>
+
+    <div class="sub">Theme</div>
+    <div class="themes" id="themes"></div>
+
+    <div class="sub">Brand footer</div>
+    <div class="row"><label>Name</label><input type="text" id="bName" placeholder="Your name"></div>
+    <div class="row"><label>Handle</label><input type="text" id="bHandle" placeholder="@handle"></div>
+    <div class="row">
+      <label><input type="checkbox" id="pageNums" checked> Show page numbers</label>
+    </div>
+
+    <div class="sub">Export</div>
+    <button class="btn" id="expPng">Download PNG set (.zip)</button>
+    <button class="btn sec" id="expPdf">Download PDF</button>
+    <div class="hint" id="freeNote"></div>
+
+    <div class="sub">License</div>
+    <div class="keyrow">
+      <input type="text" id="key" placeholder="Paste license key">
+      <button class="btn sec" style="width:auto;margin:0" id="activate">Activate</button>
+    </div>
+    <div class="hint" id="keyStat"></div>
+    <div class="hint"><a href="#" id="buy">Get the lifetime deal →</a></div>
+  </aside>
+  <main>
+    <div id="stage"><canvas id="preview"></canvas></div>
+    <div id="thumbs"></div>
+  </main>
+</div>
+<div id="status">Ready. Type your first slide.</div>
+
+<script>
+const CHECKOUT_URL="#"; // Slidepine Lifetime License — set to LS checkout URL at launch
+const FREE_SLIDES=6;
+
+const FORMATS={
+  "LinkedIn 4:5":{w:1080,h:1350},
+  "Square 1:1":{w:1080,h:1080},
+  "IG Portrait":{w:1080,h:1350},
+  "TikTok 9:16":{w:1080,h:1920}
+};
+const THEMES={
+  Pine:{bg:"#12211c",fg:"#eaf3ee",acc:"#3fbf8f"},
+  Night:{bg:"#0f1214",fg:"#e7ecee",acc:"#c8622d"},
+  Paper:{bg:"#f4f1ea",fg:"#1c1a17",acc:"#c8622d"},
+  Ocean:{bg:"#0d2233",fg:"#eaf2f7",acc:"#4ba3d3"},
+  Grape:{bg:"#1e1030",fg:"#f0eafa",acc:"#a877e0"},
+  Sun:{bg:"#2a1c07",fg:"#fdf3e0",acc:"#f0a92b"},
+  Rose:{bg:"#2a0f18",fg:"#fbe9ef",acc:"#e06a90"},
+  Mono:{bg:"#161616",fg:"#fafafa",acc:"#fafafa"}
+};
+
+const S={
+  slides:[{title:"Your big idea",body:"Type your carousel here.\nEach slide is one screen.\nSwipe → keeps them reading."}],
+  cur:0, format:"LinkedIn 4:5", theme:"Pine",
+  brand:{name:"",handle:""}, pageNums:true, licensed:false
+};
+
+function save(){try{localStorage.setItem('slidepine_state',JSON.stringify({slides:S.slides,format:S.format,theme:S.theme,brand:S.brand,pageNums:S.pageNums}))}catch(e){}}
+function load(){try{const s=JSON.parse(localStorage.getItem('slidepine_state'));if(s&&s.slides&&s.slides.length){Object.assign(S,s)}}catch(e){}}
+
+function wrap(ctx,text,maxW){
+  const out=[];
+  text.split("\n").forEach(para=>{
+    if(para===""){out.push("");return;}
+    let line="";
+    para.split(" ").forEach(word=>{
+      const test=line?line+" "+word:word;
+      if(ctx.measureText(test).width>maxW && line){out.push(line);line=word;}
+      else line=test;
+    });
+    if(line)out.push(line);
+  });
+  return out;
+}
+
+function draw(canvas,i,scale){
+  const f=FORMATS[S.format], t=THEMES[S.theme], sl=S.slides[i];
+  canvas.width=f.w; canvas.height=f.h;
+  const ctx=canvas.getContext('2d');
+  ctx.fillStyle=t.bg; ctx.fillRect(0,0,f.w,f.h);
+  const pad=Math.round(f.w*0.09);
+  // accent bar
+  ctx.fillStyle=t.acc; ctx.fillRect(pad,pad,Math.round(f.w*0.14),10);
+  // title
+  ctx.fillStyle=t.fg; ctx.textBaseline="top";
+  const titleSize=Math.round(f.w*0.075);
+  ctx.font=`700 ${titleSize}px -apple-system,"Segoe UI",Roboto,sans-serif`;
+  let y=pad+40;
+  wrap(ctx,sl.title||"",f.w-pad*2).forEach(ln=>{ctx.fillText(ln,pad,y);y+=titleSize*1.15;});
+  y+=Math.round(f.w*0.03);
+  // body
+  const bodySize=Math.round(f.w*0.042);
+  ctx.font=`400 ${bodySize}px -apple-system,"Segoe UI",Roboto,sans-serif`;
+  ctx.fillStyle=t.fg;
+  wrap(ctx,sl.body||"",f.w-pad*2).forEach(ln=>{ctx.fillText(ln,pad,y);y+=bodySize*1.45;});
+  // footer
+  const fy=f.h-pad;
+  ctx.textBaseline="alphabetic";
+  const bn=S.brand.name||"", bh=S.brand.handle||"";
+  if(bn||bh){
+    ctx.font=`600 ${Math.round(f.w*0.032)}px -apple-system,"Segoe UI",Roboto,sans-serif`;
+    ctx.fillStyle=t.fg; ctx.fillText(bn,pad,fy);
+    ctx.fillStyle=t.acc; ctx.font=`400 ${Math.round(f.w*0.03)}px -apple-system,"Segoe UI",Roboto,sans-serif`;
+    ctx.fillText(bh,pad,fy+Math.round(f.w*0.04));
+  }
+  if(S.pageNums){
+    ctx.fillStyle=t.acc;ctx.textAlign="right";
+    ctx.font=`600 ${Math.round(f.w*0.032)}px -apple-system,"Segoe UI",Roboto,sans-serif`;
+    ctx.fillText(`${i+1} / ${S.slides.length}`,f.w-pad,fy);
+    ctx.textAlign="left";
+  }
+  // free watermark
+  if(!S.licensed){
+    ctx.save();ctx.globalAlpha=.5;ctx.fillStyle=t.fg;ctx.textAlign="right";
+    ctx.font=`600 ${Math.round(f.w*0.026)}px -apple-system,sans-serif`;
+    ctx.fillText("made with Slidepine",f.w-pad,pad+Math.round(f.w*0.03));
+    ctx.restore();ctx.textAlign="left";
+  }
+}
+
+function renderPreview(){
+  const c=document.getElementById('preview');
+  draw(c,S.cur,1);
+  document.getElementById('count').textContent=`${S.slides.length} slide${S.slides.length>1?'s':''}`;
+}
+function renderThumbs(){
+  const box=document.getElementById('thumbs');box.innerHTML="";
+  S.slides.forEach((sl,i)=>{
+    const d=document.createElement('div');d.className="thumb"+(i===S.cur?" on":"");
+    const c=document.createElement('canvas');draw(c,i,1);
+    d.appendChild(c);
+    const idx=document.createElement('div');idx.className="idx";idx.textContent=i+1;d.appendChild(idx);
+    if(S.slides.length>1){const x=document.createElement('div');x.className="del";x.textContent="×";
+      x.onclick=(e)=>{e.stopPropagation();S.slides.splice(i,1);if(S.cur>=S.slides.length)S.cur=S.slides.length-1;syncForm();renderAll();save();};d.appendChild(x);}
+    d.onclick=()=>{S.cur=i;syncForm();renderAll();};
+    box.appendChild(d);
+  });
+}
+function renderAll(){renderPreview();renderThumbs();updateFreeNote();}
+function updateFreeNote(){
+  document.getElementById('freeNote').textContent=S.licensed?'Pro: unlimited slides, no watermark, PDF unlocked.':`Free: up to ${FREE_SLIDES} slides, PNG export, small watermark. Upgrade to unlock PDF + remove watermark.`;
+}
+function syncForm(){
+  const sl=S.slides[S.cur];
+  document.getElementById('fTitle').value=sl.title||"";
+  document.getElementById('fBody').value=sl.body||"";
+}
+
+// form bindings
+document.getElementById('fTitle').oninput=e=>{S.slides[S.cur].title=e.target.value;renderAll();save();};
+document.getElementById('fBody').oninput=e=>{S.slides[S.cur].body=e.target.value;renderAll();save();};
+document.getElementById('bName').oninput=e=>{S.brand.name=e.target.value;renderAll();save();};
+document.getElementById('bHandle').oninput=e=>{S.brand.handle=e.target.value;renderAll();save();};
+document.getElementById('pageNums').onchange=e=>{S.pageNums=e.target.checked;renderAll();save();};
+document.getElementById('addSlide').onclick=()=>{
+  if(!S.licensed && S.slides.length>=FREE_SLIDES){setStatus(`Free tier is capped at ${FREE_SLIDES} slides — activate a license for unlimited.`);return;}
+  S.slides.splice(S.cur+1,0,{title:"",body:""});S.cur++;syncForm();renderAll();save();
+};
+document.getElementById('dupSlide').onclick=()=>{
+  if(!S.licensed && S.slides.length>=FREE_SLIDES){setStatus(`Free tier is capped at ${FREE_SLIDES} slides.`);return;}
+  S.slides.splice(S.cur+1,0,JSON.parse(JSON.stringify(S.slides[S.cur])));S.cur++;syncForm();renderAll();save();
+};
+document.getElementById('mvLeft').onclick=()=>{if(S.cur>0){[S.slides[S.cur-1],S.slides[S.cur]]=[S.slides[S.cur],S.slides[S.cur-1]];S.cur--;renderAll();save();}};
+document.getElementById('mvRight').onclick=()=>{if(S.cur<S.slides.length-1){[S.slides[S.cur+1],S.slides[S.cur]]=[S.slides[S.cur],S.slides[S.cur+1]];S.cur++;renderAll();save();}};
+
+// formats + themes UI
+const fbox=document.getElementById('formats');
+Object.keys(FORMATS).forEach(k=>{const b=document.createElement('button');b.textContent=k;b.className=k===S.format?"on":"";
+  b.onclick=()=>{S.format=k;[...fbox.children].forEach(c=>c.className=c.textContent===k?"on":"");renderAll();save();};fbox.appendChild(b);});
+const tbox=document.getElementById('themes');
+Object.keys(THEMES).forEach(k=>{const t=THEMES[k];const d=document.createElement('div');d.className="sw"+(k===S.theme?" on":"");
+  d.style.background=t.bg;d.style.color=t.fg;d.textContent=k;
+  d.onclick=()=>{S.theme=k;[...tbox.children].forEach((c,i)=>c.className="sw"+(Object.keys(THEMES)[i]===k?" on":""));renderAll();save();};tbox.appendChild(d);});
+
+function setStatus(m){document.getElementById('status').textContent=m;}
+
+// exports
+document.getElementById('expPng').onclick=async()=>{
+  setStatus("Rendering PNGs…");
+  const zip=new JSZip();
+  for(let i=0;i<S.slides.length;i++){
+    const c=document.createElement('canvas');draw(c,i,1);
+    const blob=await new Promise(r=>c.toBlob(r,'image/png'));
+    zip.file(`slide-${String(i+1).padStart(2,'0')}.png`,blob);
+  }
+  const out=await zip.generateAsync({type:'blob'});
+  dl(out,'slidepine-carousel.zip');setStatus(`Exported ${S.slides.length} PNG${S.slides.length>1?'s':''}.`);
+};
+document.getElementById('expPdf').onclick=()=>{
+  if(!S.licensed){setStatus("PDF export is a Pro feature — activate a license to unlock.");return;}
+  setStatus("Building PDF…");
+  const f=FORMATS[S.format];
+  const {jsPDF}=window.jspdf;
+  const pdf=new jsPDF({orientation:f.w>f.h?'l':'p',unit:'px',format:[f.w,f.h]});
+  S.slides.forEach((sl,i)=>{
+    const c=document.createElement('canvas');draw(c,i,1);
+    if(i>0)pdf.addPage([f.w,f.h],f.w>f.h?'l':'p');
+    pdf.addImage(c.toDataURL('image/jpeg',0.92),'JPEG',0,0,f.w,f.h);
+  });
+  pdf.save('slidepine-carousel.pdf');setStatus("PDF exported.");
+};
+function dl(blob,name){const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),2000);}
+
+// license
+async function validKeyLS(key){
+  try{const r=await fetch('https://api.lemonsqueezy.com/v1/licenses/validate',{method:'POST',headers:{'Accept':'application/json','Content-Type':'application/x-www-form-urlencoded'},body:new URLSearchParams({license_key:key.trim()})});const d=await r.json();return d.valid===true&&d.license_key&&d.license_key.status!=='disabled'&&d.license_key.status!=='expired';}catch(e){return false}
+}
+try{const s=localStorage.getItem('slidepine_license');if(s)document.getElementById('key').value=s;}catch(e){}
+document.getElementById('activate').onclick=async()=>{
+  const k=document.getElementById('key').value.trim();const st=document.getElementById('keyStat');const p=document.getElementById('planPill');
+  if(!k){st.textContent="Paste your license key first.";return;}
+  if(CHECKOUT_URL==="#"){st.textContent='License validation goes live at launch.';st.style.color='var(--mut)';return;}
+  st.textContent="Checking…";
+  const ok=await validKeyLS(k);S.licensed=ok;
+  p.textContent=ok?'PRO':'FREE';p.className='pill'+(ok?'':' free');
+  st.textContent=ok?'Activated — thank you!':'Key not valid.';st.style.color=ok?'#3fbf8f':'#e0736a';
+  try{ok?localStorage.setItem('slidepine_license',k):localStorage.removeItem('slidepine_license');}catch(e){}
+  renderAll();
+};
+document.getElementById('buy').onclick=e=>{if(CHECKOUT_URL==="#"){e.preventDefault();setStatus('Checkout link goes live at launch.');}else{document.getElementById('buy').href=CHECKOUT_URL;}};
+
+// boot
+load();syncForm();
+document.getElementById('bName').value=S.brand.name||"";
+document.getElementById('bHandle').value=S.brand.handle||"";
+document.getElementById('pageNums').checked=S.pageNums;
+[...fbox.children].forEach(c=>c.className=c.textContent===S.format?"on":"");
+[...tbox.children].forEach((c,i)=>c.className="sw"+(Object.keys(THEMES)[i]===S.theme?" on":""));
+renderAll();
+</script>
+</body>
+</html>
