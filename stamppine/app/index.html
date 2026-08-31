@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Stamppine — Batch watermark your photos, 100% in your browser</title>
+<script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
+<style>
+  :root{--bg:#0f1214;--panel:#171b1e;--line:#262c30;--txt:#e7ecee;--mut:#94a1a6;--acc:#c8622d;}
+  *{box-sizing:border-box}
+  body{margin:0;font:14px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;background:var(--bg);color:var(--txt);height:100vh;display:flex;flex-direction:column}
+  header{display:flex;align-items:center;gap:10px;padding:10px 16px;border-bottom:1px solid var(--line)}
+  header b{font-size:16px}.tag{color:var(--mut);font-size:12px}
+  .wrap{flex:1;display:flex;min-height:0}
+  aside{width:340px;padding:14px;border-right:1px solid var(--line);overflow:auto;background:var(--panel)}
+  main{flex:1;display:flex;flex-direction:column;min-width:0}
+  #stage{flex:1;display:flex;align-items:center;justify-content:center;overflow:auto;padding:20px;background:#0b0e0f}
+  #preview{max-height:100%;max-width:100%;box-shadow:0 20px 60px rgba(0,0,0,.5);border-radius:6px;background:#000}
+  #empty{color:var(--mut);text-align:center}
+  #thumbs{display:flex;gap:8px;padding:10px 14px;overflow-x:auto;border-top:1px solid var(--line);background:var(--panel);min-height:20px}
+  .thumb{position:relative;flex:0 0 auto;cursor:pointer;border:2px solid transparent;border-radius:6px}
+  .thumb.on{border-color:var(--acc)}
+  .thumb canvas{display:block;width:64px;height:64px;object-fit:cover;border-radius:4px;background:#000}
+  .thumb .del{position:absolute;top:-6px;right:-6px;background:#c8362d;color:#fff;border-radius:50%;width:18px;height:18px;font-size:12px;line-height:18px;text-align:center;cursor:pointer}
+  .row{margin-bottom:14px}
+  label{display:block;color:var(--mut);font-size:12px;margin-bottom:5px}
+  .sub{font-size:11px;color:var(--mut);text-transform:uppercase;letter-spacing:.5px;margin:16px 0 8px;border-top:1px solid var(--line);padding-top:14px}
+  input[type=text],select{background:var(--bg);border:1px solid var(--line);color:var(--txt);padding:8px;border-radius:6px;width:100%;font:inherit}
+  input[type=range]{width:100%}
+  input[type=color]{width:100%;height:34px;background:var(--bg);border:1px solid var(--line);border-radius:6px}
+  .seg{display:flex;gap:6px;flex-wrap:wrap}.seg button{flex:1;padding:7px;background:var(--bg);border:1px solid var(--line);color:var(--txt);border-radius:6px;cursor:pointer;font-size:12px}
+  .seg button.on{background:var(--acc);border-color:var(--acc);color:#fff}
+  .grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+  .grid3 button{padding:10px 0;background:var(--bg);border:1px solid var(--line);color:var(--txt);border-radius:6px;cursor:pointer;font-size:16px}
+  .grid3 button.on{background:var(--acc);border-color:var(--acc);color:#fff}
+  .btn{width:100%;padding:12px;background:var(--acc);border:none;color:#fff;font-weight:600;border-radius:8px;cursor:pointer;font-size:14px;margin-top:8px}
+  .btn:disabled{opacity:.5;cursor:default}
+  .btn.sec{background:var(--bg);border:1px solid var(--line)}
+  .keyrow{display:flex;gap:6px}
+  .hint{font-size:11px;color:var(--mut);margin-top:6px}
+  .pill{font-size:10px;padding:2px 7px;border-radius:20px;background:var(--acc);color:#fff}
+  .pill.free{background:#3a4147}
+  #status{padding:10px 16px;border-top:1px solid var(--line);color:var(--mut);font-size:13px;min-height:20px}
+  .two{display:flex;gap:8px;align-items:center}.two label{margin:0}
+  .val{color:var(--txt);font-size:12px;float:right}
+  a{color:var(--acc)}
+</style>
+</head>
+<body>
+<header>
+  <b>🅢 Stamppine</b><span class="tag">Batch photo watermarking — 100% in your browser, nothing uploaded</span>
+  <span style="flex:1"></span><span id="count" class="tag"></span>
+  <span id="planPill" class="pill free">FREE</span>
+</header>
+<div class="wrap">
+  <aside>
+    <div class="sub" style="margin-top:0;border:0;padding:0">Photos</div>
+    <div class="row">
+      <button class="btn sec" id="addBtn">+ Add photos</button>
+      <input type="file" id="file" accept="image/*" multiple hidden>
+      <div class="hint">Drag &amp; drop anywhere too. Everything stays on your device.</div>
+    </div>
+
+    <div class="sub">Watermark type</div>
+    <div class="seg" id="wtype">
+      <button data-t="text" class="on">Text</button>
+      <button data-t="logo">Logo (PNG)</button>
+    </div>
+
+    <div id="textOpts">
+      <div class="row" style="margin-top:12px">
+        <label>Text</label>
+        <input type="text" id="wtext" value="© Your Name">
+      </div>
+      <div class="row">
+        <label>Font</label>
+        <select id="wfont">
+          <option value="Helvetica, Arial, sans-serif">Sans (Helvetica)</option>
+          <option value="Georgia, 'Times New Roman', serif">Serif (Georgia)</option>
+          <option value="'Courier New', monospace">Mono</option>
+          <option value="Impact, sans-serif">Impact</option>
+        </select>
+      </div>
+      <div class="row">
+        <label>Color <span class="val" id="colVal"></span></label>
+        <input type="color" id="wcolor" value="#ffffff">
+      </div>
+    </div>
+
+    <div id="logoOpts" style="display:none">
+      <div class="row" style="margin-top:12px">
+        <button class="btn sec" id="logoBtn">Choose logo PNG</button>
+        <input type="file" id="logoFile" accept="image/png,image/*" hidden>
+        <div class="hint" id="logoName">Transparent PNG works best.</div>
+      </div>
+    </div>
+
+    <div class="sub">Style</div>
+    <div class="row">
+      <label>Size <span class="val" id="sizeVal">6%</span></label>
+      <input type="range" id="wsize" min="2" max="30" value="6">
+    </div>
+    <div class="row">
+      <label>Opacity <span class="val" id="opVal">55%</span></label>
+      <input type="range" id="wop" min="5" max="100" value="55">
+    </div>
+    <div class="row">
+      <label>Rotation <span class="val" id="rotVal">0°</span></label>
+      <input type="range" id="wrot" min="-90" max="90" value="0">
+    </div>
+
+    <div class="sub">Placement</div>
+    <div class="grid3" id="pos">
+      <button data-p="tl">↖</button><button data-p="tc">↑</button><button data-p="tr">↗</button>
+      <button data-p="ml">←</button><button data-p="mc" class="on">•</button><button data-p="mr">→</button>
+      <button data-p="bl">↙</button><button data-p="bc">↓</button><button data-p="br">↘</button>
+    </div>
+    <div class="row" style="margin-top:10px">
+      <label class="two"><input type="checkbox" id="tiled" style="width:auto"> &nbsp;Tile / repeat across whole image</label>
+    </div>
+
+    <div class="sub">Export</div>
+    <div class="row">
+      <label>JPEG quality <span class="val" id="qVal">92%</span></label>
+      <input type="range" id="quality" min="50" max="100" value="92">
+    </div>
+    <button class="btn" id="export">Export watermarked ZIP</button>
+    <div class="hint" id="freeHint">Free plan exports up to 3 photos at a time.</div>
+
+    <div class="sub">License</div>
+    <div class="row">
+      <div class="keyrow">
+        <input type="text" id="key" placeholder="Paste license key">
+        <button class="btn sec" id="activate" style="width:auto;margin-top:0">Activate</button>
+      </div>
+      <div class="hint">Unlimited batch size. <a id="buy" href="#" target="_blank">Get a lifetime license →</a></div>
+    </div>
+  </aside>
+  <main>
+    <div id="stage"><div id="empty">Add photos to start.<br>Your watermark applies to the whole batch.</div><canvas id="preview" hidden></canvas></div>
+    <div id="thumbs"></div>
+  </main>
+</div>
+<div id="status">Ready.</div>
+
+<script>
+const CHECKOUT_URL="#"; // Stamppine Lifetime License — set after Alex creates the LS product
+const $=id=>document.getElementById(id);
+const S={imgs:[],sel:-1,type:'text',pos:'mc',logo:null,licensed:false,freeCap:3};
+
+function setStatus(t,c){const s=$('status');s.textContent=t;s.style.color=c||'var(--mut)';}
+function updCount(){$('count').textContent=S.imgs.length?S.imgs.length+' photo'+(S.imgs.length>1?'s':''):'';}
+
+// ---- load images ----
+function addFiles(files){
+  const arr=[...files].filter(f=>f.type.startsWith('image/'));
+  let done=0;
+  if(!arr.length)return;
+  arr.forEach(f=>{
+    const r=new FileReader();
+    r.onload=e=>{
+      const im=new Image();
+      im.onload=()=>{
+        S.imgs.push({img:im,name:f.name,type:f.type});
+        done++;
+        if(done===arr.length){ if(S.sel<0)S.sel=0; renderThumbs(); draw(); updCount(); setStatus(S.imgs.length+' photo(s) loaded.'); }
+      };
+      im.src=e.target.result;
+    };
+    r.readAsDataURL(f);
+  });
+}
+$('addBtn').onclick=()=>$('file').click();
+$('file').onchange=e=>addFiles(e.target.files);
+document.addEventListener('dragover',e=>{e.preventDefault();});
+document.addEventListener('drop',e=>{e.preventDefault(); if(e.dataTransfer.files.length)addFiles(e.dataTransfer.files);});
+
+// ---- logo ----
+$('logoBtn').onclick=()=>$('logoFile').click();
+$('logoFile').onchange=e=>{
+  const f=e.target.files[0]; if(!f)return;
+  const r=new FileReader();
+  r.onload=ev=>{const im=new Image();im.onload=()=>{S.logo=im;$('logoName').textContent=f.name;draw();};im.src=ev.target.result;};
+  r.readAsDataURL(f);
+};
+
+// ---- thumbs ----
+function renderThumbs(){
+  const t=$('thumbs');t.innerHTML='';
+  S.imgs.forEach((o,i)=>{
+    const d=document.createElement('div');d.className='thumb'+(i===S.sel?' on':'');
+    const c=document.createElement('canvas');c.width=64;c.height=64;
+    const ctx=c.getContext('2d');
+    const s=Math.max(64/o.img.width,64/o.img.height);
+    const w=o.img.width*s,h=o.img.height*s;
+    ctx.drawImage(o.img,(64-w)/2,(64-h)/2,w,h);
+    d.appendChild(c);
+    const del=document.createElement('div');del.className='del';del.textContent='×';
+    del.onclick=ev=>{ev.stopPropagation();S.imgs.splice(i,1);if(S.sel>=S.imgs.length)S.sel=S.imgs.length-1;renderThumbs();draw();updCount();};
+    d.appendChild(del);
+    d.onclick=()=>{S.sel=i;renderThumbs();draw();};
+    t.appendChild(d);
+  });
+}
+
+// ---- draw watermark onto a canvas ----
+function applyWatermark(ctx,W,H){
+  const op=(+$('wop').value)/100;
+  const rot=(+$('wrot').value)*Math.PI/180;
+  const sizePct=(+$('wsize').value)/100;
+  const tiled=$('tiled').checked;
+  ctx.save();
+  ctx.globalAlpha=op;
+
+  if(S.type==='text'){
+    const txt=$('wtext').value||'';
+    const fs=Math.round(Math.min(W,H)*sizePct*1.4)+ (Math.min(W,H)*sizePct*0.2|0);
+    ctx.font='bold '+Math.max(10,fs)+'px '+$('wfont').value;
+    ctx.fillStyle=$('wcolor').value;
+    ctx.textAlign='center';ctx.textBaseline='middle';
+    if(tiled){
+      const m=ctx.measureText(txt);const tw=Math.max(m.width,20)+Math.min(W,H)*0.08;
+      const th=fs*2.4;
+      ctx.translate(W/2,H/2);ctx.rotate(rot||(-25*Math.PI/180));ctx.translate(-W/2,-H/2);
+      for(let y=-H;y<H*2;y+=th){ for(let x=-W;x<W*2;x+=tw){ ctx.fillText(txt,x,y); } }
+    } else {
+      const [x,y]=posXY(W,H,ctx.measureText(txt).width,fs);
+      ctx.translate(x,y);ctx.rotate(rot);ctx.fillText(txt,0,0);
+    }
+  } else if(S.logo){
+    const lw=Math.min(W,H)*sizePct*4;
+    const lh=lw*(S.logo.height/S.logo.width);
+    if(tiled){
+      const tw=lw+Math.min(W,H)*0.06, th=lh+Math.min(W,H)*0.06;
+      ctx.translate(W/2,H/2);ctx.rotate(rot||(-25*Math.PI/180));ctx.translate(-W/2,-H/2);
+      for(let y=-H;y<H*2;y+=th){ for(let x=-W;x<W*2;x+=tw){ ctx.drawImage(S.logo,x,y,lw,lh); } }
+    } else {
+      const [cx,cy]=posXY(W,H,lw,lh);
+      ctx.translate(cx,cy);ctx.rotate(rot);ctx.drawImage(S.logo,-lw/2,-lh/2,lw,lh);
+    }
+  }
+  ctx.restore();
+}
+function posXY(W,H,w,h){
+  const pad=Math.min(W,H)*0.04;
+  const p=S.pos;
+  let x=W/2,y=H/2;
+  if(p[0]==='t')y=pad+h/2; if(p[0]==='b')y=H-pad-h/2; if(p[0]==='m')y=H/2;
+  if(p[1]==='l')x=pad+w/2; if(p[1]==='r')x=W-pad-w/2; if(p[1]==='c')x=W/2;
+  return [x,y];
+}
+
+function draw(){
+  if(S.sel<0||!S.imgs[S.sel]){$('preview').hidden=true;$('empty').style.display='';return;}
+  $('empty').style.display='none';
+  const o=S.imgs[S.sel];const c=$('preview');c.hidden=false;
+  c.width=o.img.width;c.height=o.img.height;
+  const ctx=c.getContext('2d');
+  ctx.drawImage(o.img,0,0);
+  applyWatermark(ctx,c.width,c.height);
+}
+
+// ---- controls wire-up ----
+[['wsize','sizeVal','%'],['wop','opVal','%'],['wrot','rotVal','°'],['quality','qVal','%']].forEach(([id,lab,suf])=>{
+  $(id).oninput=()=>{$(lab).textContent=$(id).value+suf;draw();};
+});
+['wtext','wfont','wcolor','tiled'].forEach(id=>$(id).oninput=draw);
+document.querySelectorAll('#wtype button').forEach(b=>b.onclick=()=>{
+  document.querySelectorAll('#wtype button').forEach(x=>x.classList.remove('on'));
+  b.classList.add('on');S.type=b.dataset.t;
+  $('textOpts').style.display=S.type==='text'?'':'none';
+  $('logoOpts').style.display=S.type==='logo'?'':'none';draw();
+});
+document.querySelectorAll('#pos button').forEach(b=>b.onclick=()=>{
+  document.querySelectorAll('#pos button').forEach(x=>x.classList.remove('on'));
+  b.classList.add('on');S.pos=b.dataset.p;draw();
+});
+
+// ---- license ----
+async function validKeyLS(key){
+  try{const r=await fetch('https://api.lemonsqueezy.com/v1/licenses/validate',{method:'POST',headers:{'Accept':'application/json','Content-Type':'application/x-www-form-urlencoded'},body:new URLSearchParams({license_key:key.trim()})});const d=await r.json();return d.valid===true&&d.license_key&&d.license_key.status!=='disabled'&&d.license_key.status!=='expired';}catch(e){return false}
+}
+$('activate').onclick=async()=>{
+  const k=$('key').value.trim();if(!k){setStatus('Paste a license key first.');return;}
+  if(CHECKOUT_URL==="#"){setStatus('License validation goes live at launch.');return;}
+  setStatus('Validating…');
+  const ok=await validKeyLS(k);S.licensed=ok;
+  if(ok){$('planPill').textContent='LICENSED';$('planPill').classList.remove('free');$('freeHint').style.display='none';setStatus('License active — unlimited batch unlocked.','#7bcf8a');localStorage.setItem('stamppine_key',k);}
+  else setStatus('That key did not validate.','#e08');
+};
+$('buy').onclick=e=>{if(CHECKOUT_URL==="#"){e.preventDefault();setStatus('Checkout link goes live at launch.');}else{$('buy').href=CHECKOUT_URL;}};
+(function(){const k=localStorage.getItem('stamppine_key');if(k&&CHECKOUT_URL!=="#"){$('key').value=k;$('activate').click();}})();
+
+// ---- export ----
+$('export').onclick=async()=>{
+  if(!S.imgs.length){setStatus('Add some photos first.');return;}
+  let list=S.imgs;
+  if(!S.licensed&&S.imgs.length>S.freeCap){
+    list=S.imgs.slice(0,S.freeCap);
+    setStatus('Free plan: exporting first '+S.freeCap+' photos. Activate a license for the full batch.');
+  } else setStatus('Rendering '+list.length+' photo(s)…');
+  const q=(+$('quality').value)/100;
+  const zip=new JSZip();
+  for(let i=0;i<list.length;i++){
+    const o=list[i];
+    const c=document.createElement('canvas');c.width=o.img.width;c.height=o.img.height;
+    const ctx=c.getContext('2d');ctx.drawImage(o.img,0,0);applyWatermark(ctx,c.width,c.height);
+    const isPng=/png$/i.test(o.type)||/\.png$/i.test(o.name);
+    const mime=isPng?'image/png':'image/jpeg';
+    const blob=await new Promise(res=>c.toBlob(res,mime,isPng?undefined:q));
+    const base=o.name.replace(/\.[^.]+$/,'');
+    zip.file(base+'-watermarked.'+(isPng?'png':'jpg'),blob);
+    setStatus('Rendered '+(i+1)+'/'+list.length+'…');
+  }
+  const out=await zip.generateAsync({type:'blob'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(out);a.download='stamppine-watermarked.zip';a.click();
+  setStatus('Done — '+list.length+' watermarked photo(s) exported.','#7bcf8a');
+};
+
+$('colVal');
+draw();
+</script>
+</body>
+</html>
