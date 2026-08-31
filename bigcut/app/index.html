@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BigCut — Trim, cut &amp; delete video, 100% in your browser</title>
+<style>
+  :root{--bg:#0f1214;--panel:#171b1e;--line:#262c30;--txt:#e7ecee;--mut:#94a1a6;--acc:#5b8def;--danger:#c8362d;--go:#3fbf8f;}
+  *{box-sizing:border-box}
+  body{margin:0;font:15px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;background:var(--bg);color:var(--txt);height:100vh;display:flex;flex-direction:column}
+  header{display:flex;align-items:center;gap:10px;padding:12px 18px;border-bottom:1px solid var(--line)}
+  header b{font-size:18px}.tag{color:var(--mut);font-size:13px}
+  .pill{font-size:11px;padding:3px 9px;border-radius:20px;background:var(--acc);color:#fff}
+  .pill.free{background:#3a4147}
+  .wrap{flex:1;display:flex;min-height:0}
+  aside{width:360px;padding:18px;border-right:1px solid var(--line);overflow:auto;background:var(--panel)}
+  main{flex:1;display:flex;flex-direction:column;min-width:0}
+  #stage{flex:1;display:flex;align-items:center;justify-content:center;overflow:hidden;padding:18px;background:#0b0e0f}
+  video{max-height:100%;max-width:100%;border-radius:8px;background:#000;box-shadow:0 20px 60px rgba(0,0,0,.5)}
+  #drop{color:var(--mut);text-align:center;border:2px dashed var(--line);border-radius:14px;padding:60px 40px;cursor:pointer}
+  #drop b{color:var(--txt);font-size:18px;display:block;margin-bottom:8px}
+  /* transport / timeline */
+  .transport{padding:14px 18px;border-top:1px solid var(--line);background:var(--panel)}
+  .tl{position:relative;height:56px;background:#0b0e0f;border-radius:10px;border:1px solid var(--line);overflow:hidden;cursor:pointer;margin-bottom:12px}
+  .seg{position:absolute;top:0;bottom:0;background:rgba(91,141,239,.28);border-left:2px solid var(--acc);border-right:2px solid var(--acc)}
+  .seg.sel{background:rgba(91,141,239,.5)}
+  .seg.cut{background:rgba(200,54,45,.18);border-color:var(--danger)}
+  .playhead{position:absolute;top:0;bottom:0;width:2px;background:#fff;pointer-events:none;box-shadow:0 0 6px #fff}
+  .times{display:flex;justify-content:space-between;color:var(--mut);font-size:13px;margin-bottom:12px;font-variant-numeric:tabular-nums}
+  /* BIG buttons — the whole point */
+  .bigrow{display:flex;gap:12px;margin-bottom:12px}
+  .big{flex:1;padding:20px 10px;font-size:16px;font-weight:700;border-radius:14px;border:1px solid var(--line);background:var(--bg);color:var(--txt);cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:6px;min-height:74px;transition:transform .08s,border-color .12s}
+  .big .ic{font-size:26px;line-height:1}
+  .big:active{transform:scale(.96)}
+  .big:hover{border-color:var(--acc)}
+  .big.play{background:var(--acc);border-color:var(--acc);color:#fff}
+  .big.danger:hover{border-color:var(--danger)}
+  .big:disabled{opacity:.4;cursor:default}
+  .sub{font-size:12px;color:var(--mut);text-transform:uppercase;letter-spacing:.5px;margin:20px 0 10px;border-top:1px solid var(--line);padding-top:16px}
+  .row{margin-bottom:14px}
+  label{display:block;color:var(--mut);font-size:12px;margin-bottom:6px}
+  .btn{width:100%;padding:16px;background:var(--acc);border:none;color:#fff;font-weight:700;border-radius:12px;cursor:pointer;font-size:16px;margin-top:6px}
+  .btn:disabled{opacity:.5;cursor:default}
+  .btn.sec{background:var(--bg);border:1px solid var(--line);color:var(--txt)}
+  .btn.go{background:var(--go)}
+  .seglist{list-style:none;padding:0;margin:0}
+  .seglist li{display:flex;align-items:center;gap:10px;padding:12px;border:1px solid var(--line);border-radius:10px;margin-bottom:8px;background:var(--bg);cursor:pointer;font-size:14px}
+  .seglist li.on{border-color:var(--acc)}
+  .seglist li .len{margin-left:auto;color:var(--mut);font-variant-numeric:tabular-nums}
+  .seglist li .x{background:var(--danger);color:#fff;border:none;border-radius:8px;width:30px;height:30px;font-size:16px;cursor:pointer}
+  .hint{font-size:12px;color:var(--mut);margin-top:8px}
+  #status{padding:12px 18px;border-top:1px solid var(--line);color:var(--mut);font-size:14px;min-height:22px}
+  input[type=range]{width:100%}
+  .keyrow{display:flex;gap:8px}
+  input[type=text]{background:var(--bg);border:1px solid var(--line);color:var(--txt);padding:10px;border-radius:8px;width:100%;font:inherit}
+  a{color:var(--acc)}
+  @media(max-width:760px){
+    .wrap{flex-direction:column}
+    aside{width:100%;order:2;max-height:none;border-right:0;border-top:1px solid var(--line)}
+    main{order:1;min-height:38vh}
+    header .tag{display:none}
+    .big{min-height:84px;font-size:17px}
+    .big .ic{font-size:30px}
+  }
+</style>
+</head>
+<body>
+<header>
+  <b>✂ BigCut</b><span class="tag">Trim, cut &amp; delete video — big buttons, nothing uploaded</span>
+  <span style="flex:1"></span><span id="count" class="tag"></span>
+  <span id="planPill" class="pill free">FREE</span>
+</header>
+<div class="wrap">
+  <aside>
+    <div class="sub" style="margin-top:0;border:0;padding:0">Video</div>
+    <div class="row">
+      <button class="btn sec" id="addBtn">+ Open a video</button>
+      <input type="file" id="file" accept="video/*" hidden>
+      <div class="hint">Drag &amp; drop a video too. It never leaves your device.</div>
+    </div>
+
+    <div class="sub">Edit</div>
+    <div class="bigrow">
+      <button class="big" id="setIn" disabled><span class="ic">⭰</span>Set start</button>
+      <button class="big" id="setOut" disabled><span class="ic">⭲</span>Set end</button>
+    </div>
+    <div class="bigrow">
+      <button class="big" id="splitBtn" disabled><span class="ic">✂</span>Cut here</button>
+      <button class="big danger" id="delBtn" disabled><span class="ic">🗑</span>Delete</button>
+    </div>
+    <div class="hint">Set start/end trims the whole clip. Cut splits at the playhead. Delete removes the selected piece.</div>
+
+    <div class="sub">Pieces to keep</div>
+    <ul class="seglist" id="segs"></ul>
+
+    <div class="sub">Export</div>
+    <button class="btn go" id="export" disabled>Export video</button>
+    <div class="hint" id="freeHint">Free export up to 60s. Output is WebM, rendered in real time.</div>
+
+    <div class="sub">License</div>
+    <div class="keyrow">
+      <input type="text" id="key" placeholder="Paste license key">
+      <button class="btn sec" id="activate" style="width:auto;margin-top:0">Activate</button>
+    </div>
+    <div class="hint">Unlimited length + no watermark. <a id="buy" href="#" target="_blank">Get a lifetime license →</a></div>
+  </aside>
+  <main>
+    <div id="stage">
+      <div id="drop"><b>Drop a video here</b>or click “Open a video”. Everything stays on your device.</div>
+      <video id="v" playsinline hidden></video>
+    </div>
+    <div class="transport" id="transport" style="display:none">
+      <div class="tl" id="tl"><div class="playhead" id="ph" style="left:0"></div></div>
+      <div class="times"><span id="tCur">0:00.0</span><span id="tDur">0:00.0</span></div>
+      <div class="bigrow">
+        <button class="big play" id="playBtn"><span class="ic">▶</span>Play</button>
+        <button class="big" id="backBtn"><span class="ic">⏮</span>Start</button>
+      </div>
+    </div>
+  </main>
+</div>
+<div id="status">Open a video to begin.</div>
+
+<script>
+const CHECKOUT_URL="#"; // BigCut Lifetime License — set after Alex creates the LS product
+const FREE_CAP=60; // seconds of total kept length in free tier
+const $=id=>document.getElementById(id);
+const v=$('v');
+const S={dur:0,segs:[],sel:-1,licensed:false,playing:false};
+
+function fmt(t){t=Math.max(0,t||0);const m=Math.floor(t/60),s=(t%60);return m+':'+s.toFixed(1).padStart(4,'0');}
+function setStatus(t,c){const s=$('status');s.textContent=t;s.style.color=c||'var(--mut)';}
+function keptLen(){return S.segs.reduce((a,x)=>a+(x.out-x.in),0);}
+function updCount(){$('count').textContent=S.dur?fmt(keptLen())+' kept':'';}
+
+// ---- load ----
+function loadFile(f){
+  if(!f||!f.type.startsWith('video/')){setStatus('That is not a video file.');return;}
+  const url=URL.createObjectURL(f);
+  v.src=url;v.hidden=false;$('drop').style.display='none';
+  const start=()=>{
+    S.dur=v.duration;
+    S.segs=[{in:0,out:S.dur}];S.sel=0;
+    $('transport').style.display='';
+    ['setIn','setOut','splitBtn','delBtn','export'].forEach(id=>$(id).disabled=false);
+    $('tDur').textContent=fmt(S.dur);
+    renderSegs();renderTL();updCount();
+    setStatus('Loaded '+f.name+'. Trim, cut, delete — then export.');
+  };
+  // Some WebM/streamed files report Infinity/NaN duration until forced to seek to the end.
+  v.onloadedmetadata=()=>{
+    if(v.duration===Infinity||isNaN(v.duration)){
+      setStatus('Reading video length…');
+      const onDur=()=>{
+        if(v.duration!==Infinity&&!isNaN(v.duration)){
+          v.removeEventListener('durationchange',onDur);
+          v.currentTime=0;start();
+        }
+      };
+      v.addEventListener('durationchange',onDur);
+      // trigger the browser to resolve real duration
+      v.currentTime=1e7;
+    } else {
+      start();
+    }
+  };
+}
+$('addBtn').onclick=()=>$('file').click();
+$('file').onchange=e=>loadFile(e.target.files[0]);
+$('drop').onclick=()=>$('file').click();
+document.addEventListener('dragover',e=>e.preventDefault());
+document.addEventListener('drop',e=>{e.preventDefault();if(e.dataTransfer.files.length)loadFile(e.dataTransfer.files[0]);});
+
+// ---- timeline ----
+function renderTL(){
+  const tl=$('tl');
+  [...tl.querySelectorAll('.seg')].forEach(s=>s.remove());
+  S.segs.forEach((sg,i)=>{
+    const d=document.createElement('div');
+    d.className='seg'+(i===S.sel?' sel':'');
+    d.style.left=(sg.in/S.dur*100)+'%';
+    d.style.width=((sg.out-sg.in)/S.dur*100)+'%';
+    d.onclick=e=>{e.stopPropagation();S.sel=i;renderSegs();renderTL();};
+    tl.insertBefore(d,$('ph'));
+  });
+}
+$('tl').onclick=e=>{
+  const r=$('tl').getBoundingClientRect();
+  const t=Math.min(1,Math.max(0,(e.clientX-r.left)/r.width))*S.dur;
+  v.currentTime=t;
+};
+function updPlayhead(){
+  $('ph').style.left=(v.currentTime/S.dur*100)+'%';
+  $('tCur').textContent=fmt(v.currentTime);
+}
+v.ontimeupdate=updPlayhead;
+v.onseeked=updPlayhead;
+
+// ---- edit ops ----
+function curSeg(){ // segment containing playhead
+  const t=v.currentTime;
+  return S.segs.findIndex(s=>t>=s.in-1e-3&&t<=s.out+1e-3);
+}
+$('setIn').onclick=()=>{
+  const i=S.sel>=0?S.sel:0;const s=S.segs[i];if(!s)return;
+  if(v.currentTime>=s.out){setStatus('Start must be before the piece’s end.');return;}
+  s.in=v.currentTime;renderSegs();renderTL();updCount();setStatus('Start trimmed to '+fmt(s.in)+'.');
+};
+$('setOut').onclick=()=>{
+  const i=S.sel>=0?S.sel:0;const s=S.segs[i];if(!s)return;
+  if(v.currentTime<=s.in){setStatus('End must be after the piece’s start.');return;}
+  s.out=v.currentTime;renderSegs();renderTL();updCount();setStatus('End trimmed to '+fmt(s.out)+'.');
+};
+$('splitBtn').onclick=()=>{
+  const i=curSeg();if(i<0){setStatus('Move the playhead over a kept piece first.');return;}
+  const s=S.segs[i],t=v.currentTime;
+  if(t<=s.in+.05||t>=s.out-.05){setStatus('Move the playhead inside the piece to cut.');return;}
+  S.segs.splice(i,1,{in:s.in,out:t},{in:t,out:s.out});
+  S.sel=i+1;renderSegs();renderTL();updCount();setStatus('Cut at '+fmt(t)+'. Two pieces now.');
+};
+$('delBtn').onclick=()=>{
+  if(S.sel<0||!S.segs[S.sel]){setStatus('Tap a piece to select it, then delete.');return;}
+  if(S.segs.length<=1){setStatus('Can’t delete the only piece.');return;}
+  S.segs.splice(S.sel,1);S.sel=Math.min(S.sel,S.segs.length-1);
+  renderSegs();renderTL();updCount();setStatus('Piece deleted.');
+};
+
+function renderSegs(){
+  const box=$('segs');box.innerHTML='';
+  S.segs.forEach((s,i)=>{
+    const li=document.createElement('li');li.className=i===S.sel?'on':'';
+    li.innerHTML='<span>Piece '+(i+1)+'</span><span class="len">'+fmt(s.in)+' → '+fmt(s.out)+'</span>';
+    li.onclick=()=>{S.sel=i;v.currentTime=s.in;renderSegs();renderTL();};
+    if(S.segs.length>1){
+      const x=document.createElement('button');x.className='x';x.textContent='×';
+      x.onclick=ev=>{ev.stopPropagation();S.segs.splice(i,1);if(S.sel>=S.segs.length)S.sel=S.segs.length-1;renderSegs();renderTL();updCount();};
+      li.appendChild(x);
+    }
+    box.appendChild(li);
+  });
+}
+
+// ---- transport ----
+$('playBtn').onclick=()=>{ if(v.paused)v.play(); else v.pause(); };
+v.onplay=()=>{S.playing=true;$('playBtn').innerHTML='<span class="ic">⏸</span>Pause';};
+v.onpause=()=>{S.playing=false;$('playBtn').innerHTML='<span class="ic">▶</span>Play';};
+$('backBtn').onclick=()=>{v.currentTime=S.segs.length?S.segs[0].in:0;};
+
+// ---- export via MediaRecorder over captureStream ----
+function pickMime(){
+  const c=['video/webm;codecs=vp9,opus','video/webm;codecs=vp8,opus','video/webm'];
+  return c.find(t=>window.MediaRecorder&&MediaRecorder.isTypeSupported(t))||'';
+}
+$('export').onclick=async()=>{
+  if(!S.segs.length){setStatus('Nothing to export.');return;}
+  const total=keptLen();
+  if(!S.licensed&&total>FREE_CAP){setStatus('Free tier caps exports at '+FREE_CAP+'s (you have '+Math.round(total)+'s). Activate a license for full length.');return;}
+  if(typeof v.captureStream!=='function'){setStatus('Your browser can’t record playback. Try Chrome or Edge.');return;}
+  const mime=pickMime();
+  if(!mime){setStatus('No WebM recorder available in this browser.');return;}
+
+  const wasMuted=v.muted;
+  const stream=v.captureStream();
+  const rec=new MediaRecorder(stream,{mimeType:mime});
+  const chunks=[];
+  rec.ondataavailable=e=>{if(e.data.size)chunks.push(e.data);};
+  const segs=S.segs.slice();let idx=0;
+  ['export','setIn','setOut','splitBtn','delBtn','playBtn'].forEach(id=>$(id).disabled=true);
+
+  const done=new Promise(res=>{rec.onstop=res;});
+  rec.start(100);
+  setStatus('Recording piece 1/'+segs.length+'… (plays in real time)');
+
+  function playSeg(){
+    if(idx>=segs.length){ v.pause(); rec.stop(); return; }
+    const s=segs[idx];
+    v.currentTime=s.in;
+    const onSeek=()=>{
+      v.removeEventListener('seeked',onSeek);
+      rec.resume&&rec.state==='paused'&&rec.resume();
+      v.play();
+      const watch=()=>{
+        if(v.currentTime>=s.out-0.02){
+          v.removeEventListener('timeupdate',watch);
+          rec.pause&&rec.pause();
+          idx++;
+          setStatus(idx<segs.length?('Recording piece '+(idx+1)+'/'+segs.length+'…'):'Finishing…');
+          playSeg();
+        }
+      };
+      v.addEventListener('timeupdate',watch);
+    };
+    v.addEventListener('seeked',onSeek);
+  }
+  playSeg();
+
+  await done;
+  const blob=new Blob(chunks,{type:mime});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='bigcut-edit.webm';a.click();
+  v.muted=wasMuted;
+  ['export','setIn','setOut','splitBtn','delBtn','playBtn'].forEach(id=>$(id).disabled=false);
+  setStatus('Done — exported '+segs.length+' piece(s), '+fmt(total)+'. Saved as WebM.','#3fbf8f');
+};
+
+// ---- license ----
+async function validKeyLS(key){
+  try{const r=await fetch('https://api.lemonsqueezy.com/v1/licenses/validate',{method:'POST',headers:{'Accept':'application/json','Content-Type':'application/x-www-form-urlencoded'},body:new URLSearchParams({license_key:key.trim()})});const d=await r.json();return d.valid===true&&d.license_key&&d.license_key.status!=='disabled'&&d.license_key.status!=='expired';}catch(e){return false}
+}
+$('activate').onclick=async()=>{
+  const k=$('key').value.trim();if(!k){setStatus('Paste a license key first.');return;}
+  if(CHECKOUT_URL==="#"){setStatus('License validation goes live at launch.');return;}
+  setStatus('Validating…');
+  const ok=await validKeyLS(k);S.licensed=ok;
+  if(ok){$('planPill').textContent='LICENSED';$('planPill').classList.remove('free');$('freeHint').style.display='none';setStatus('License active — full length unlocked.','#3fbf8f');localStorage.setItem('bigcut_key',k);}
+  else setStatus('That key did not validate.','#e08');
+};
+$('buy').onclick=e=>{if(CHECKOUT_URL==="#"){e.preventDefault();setStatus('Checkout link goes live at launch.');}else{$('buy').href=CHECKOUT_URL;}};
+(function(){const k=localStorage.getItem('bigcut_key');if(k&&CHECKOUT_URL!=="#"){$('key').value=k;$('activate').click();}})();
+</script>
+</body>
+</html>
