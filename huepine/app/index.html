@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Huepine — Extract color palettes from any image, 100% in your browser</title>
+<style>
+  :root{--bg:#0f1214;--panel:#171b1e;--line:#262c30;--txt:#e7ecee;--mut:#94a1a6;--acc:#7c5cff;}
+  *{box-sizing:border-box}
+  body{margin:0;font:14px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;background:var(--bg);color:var(--txt);min-height:100vh;display:flex;flex-direction:column}
+  header{display:flex;align-items:center;gap:10px;padding:10px 16px;border-bottom:1px solid var(--line)}
+  header b{font-size:16px}.tag{color:var(--mut);font-size:12px}
+  .wrap{flex:1;display:flex;min-height:0;flex-wrap:wrap}
+  aside{width:320px;padding:16px;border-right:1px solid var(--line);background:var(--panel)}
+  main{flex:1;min-width:320px;padding:16px;display:flex;flex-direction:column;gap:16px}
+  #drop{border:2px dashed var(--line);border-radius:12px;padding:34px 12px;text-align:center;color:var(--mut);cursor:pointer}
+  #drop.hot{border-color:var(--acc);color:var(--txt)}
+  #preview{max-width:100%;max-height:230px;border-radius:10px;display:none;margin-top:12px}
+  label{display:block;color:var(--mut);font-size:12px;margin:14px 0 5px}
+  input[type=range]{width:100%}
+  input[type=text]{background:var(--bg);border:1px solid var(--line);color:var(--txt);padding:7px;border-radius:6px;width:100%}
+  .btn{width:100%;padding:11px;background:var(--acc);border:none;color:#fff;font-weight:600;border-radius:8px;cursor:pointer;font-size:14px;margin-top:12px}
+  .btn:disabled{opacity:.5;cursor:default}
+  .btn.sec{background:var(--bg);border:1px solid var(--line)}
+  .sub{font-size:11px;color:var(--mut);text-transform:uppercase;letter-spacing:.5px;margin:18px 0 8px;border-top:1px solid var(--line);padding-top:14px}
+  .swatches{display:flex;flex-wrap:wrap;gap:10px}
+  .sw{width:120px;border:1px solid var(--line);border-radius:10px;overflow:hidden;cursor:pointer;background:var(--panel)}
+  .sw .chip{height:74px}
+  .sw .info{padding:7px 9px;font-size:12px}
+  .sw .hex{font-weight:600;letter-spacing:.4px}
+  .sw .rgb{color:var(--mut);font-size:11px}
+  .sw.base{outline:2px solid var(--acc);outline-offset:2px}
+  .harm{display:flex;gap:8px;flex-wrap:wrap}
+  .hbox{width:64px;height:64px;border-radius:8px;border:1px solid var(--line);position:relative}
+  .hbox span{position:absolute;bottom:2px;left:0;right:0;text-align:center;font-size:10px;color:#fff;text-shadow:0 1px 2px #000}
+  .exports{display:flex;gap:8px;flex-wrap:wrap}
+  .exports button{padding:8px 12px;background:var(--bg);border:1px solid var(--line);color:var(--txt);border-radius:7px;cursor:pointer;font-size:12px}
+  textarea{width:100%;height:150px;background:#0b0d0e;border:1px solid var(--line);color:var(--txt);border-radius:8px;padding:10px;font:12px/1.4 ui-monospace,Menlo,monospace;margin-top:10px}
+  .keyrow{display:flex;gap:6px}
+  .keyrow input{flex:1}
+  .keyrow button{padding:7px 12px;background:var(--acc);border:none;color:#fff;border-radius:6px;cursor:pointer}
+  #kstat{font-size:12px;margin-top:6px;min-height:16px}
+  .foot{color:var(--mut);font-size:12px;padding:14px 16px;border-top:1px solid var(--line);text-align:center}
+  .toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--acc);color:#fff;padding:9px 16px;border-radius:8px;font-size:13px;opacity:0;transition:opacity .2s;pointer-events:none}
+  .toast.show{opacity:1}
+</style>
+</head>
+<body>
+<header>
+  <b>◑ Huepine</b>
+  <span class="tag">Extract palettes from any image — nothing leaves your browser</span>
+  <span style="flex:1"></span>
+  <a class="tag" href="../" style="color:var(--acc);text-decoration:none">← Hub</a>
+</header>
+<div class="wrap">
+  <aside>
+    <div id="drop">Drop an image here<br><span class="tag">or click to choose (PNG/JPG/WEBP)</span></div>
+    <input id="file" type="file" accept="image/*" hidden>
+    <img id="preview" alt="preview">
+    <label>Number of colors: <span id="cntlbl">6</span></label>
+    <input id="count" type="range" min="3" max="10" value="6">
+    <button class="btn" id="extract" disabled>Extract palette</button>
+
+    <div class="sub">Unlock full exports</div>
+    <div class="keyrow">
+      <input id="key" type="text" placeholder="License key">
+      <button id="activate">Activate</button>
+    </div>
+    <div id="kstat"></div>
+    <a class="btn sec" id="buy" href="#" style="display:block;text-align:center;text-decoration:none;line-height:1">Get a lifetime license</a>
+  </aside>
+  <main>
+    <div>
+      <div class="sub" style="margin-top:0">Palette <span class="tag" id="hint">(extract an image to begin)</span></div>
+      <div class="swatches" id="sw"></div>
+    </div>
+    <div id="harmwrap" style="display:none">
+      <div class="sub">Harmonies from base swatch <span class="tag">(click a swatch to set base)</span></div>
+      <div style="display:flex;gap:22px;flex-wrap:wrap">
+        <div><div class="tag" style="margin-bottom:5px">Complementary</div><div class="harm" id="hcomp"></div></div>
+        <div><div class="tag" style="margin-bottom:5px">Analogous</div><div class="harm" id="hana"></div></div>
+        <div><div class="tag" style="margin-bottom:5px">Triadic</div><div class="harm" id="htri"></div></div>
+      </div>
+    </div>
+    <div id="expwrap" style="display:none">
+      <div class="sub">Export</div>
+      <div class="exports">
+        <button data-fmt="css">CSS variables</button>
+        <button data-fmt="scss">SCSS</button>
+        <button data-fmt="tw">Tailwind</button>
+        <button data-fmt="json">JSON</button>
+        <button data-fmt="png">PNG strip</button>
+      </div>
+      <textarea id="out" readonly placeholder="Choose an export format above"></textarea>
+      <button class="btn sec" id="copyout" style="max-width:200px">Copy to clipboard</button>
+    </div>
+  </main>
+</div>
+<div class="foot">Huepine — color palettes from your images, extracted locally.</div>
+<div class="toast" id="toast"></div>
+<canvas id="cv" hidden></canvas>
+<script>
+const CHECKOUT_URL="#"; // Huepine Lifetime License — set to LS checkout URL at launch
+const S={colors:[],base:0,licensed:false,img:null};
+const $=id=>document.getElementById(id);
+function toast(m){const t=$('toast');t.textContent=m;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),1400);}
+
+// ---- image load ----
+const drop=$('drop'),file=$('file'),preview=$('preview');
+drop.onclick=()=>file.click();
+drop.ondragover=e=>{e.preventDefault();drop.classList.add('hot')};
+drop.ondragleave=()=>drop.classList.remove('hot');
+drop.ondrop=e=>{e.preventDefault();drop.classList.remove('hot');if(e.dataTransfer.files[0])loadImg(e.dataTransfer.files[0])};
+file.onchange=()=>{if(file.files[0])loadImg(file.files[0])};
+function loadImg(f){
+  const url=URL.createObjectURL(f);const im=new Image();
+  im.onload=()=>{S.img=im;preview.src=url;preview.style.display='block';$('extract').disabled=false;toast('Image loaded');};
+  im.src=url;
+}
+
+// ---- median cut quantization ----
+function sample(img,n){
+  const cv=$('cv'),ctx=cv.getContext('2d');
+  const scale=Math.min(1,200/Math.max(img.width,img.height));
+  cv.width=Math.max(1,Math.round(img.width*scale));cv.height=Math.max(1,Math.round(img.height*scale));
+  ctx.drawImage(img,0,0,cv.width,cv.height);
+  const d=ctx.getImageData(0,0,cv.width,cv.height).data;const px=[];
+  for(let i=0;i<d.length;i+=4){if(d[i+3]<125)continue;px.push([d[i],d[i+1],d[i+2]]);}
+  return medianCut(px,n);
+}
+function medianCut(px,n){
+  if(!px.length)return[[0,0,0]];
+  let boxes=[px];
+  while(boxes.length<n){
+    boxes.sort((a,b)=>rng(b)-rng(a));
+    const box=boxes.shift();
+    if(box.length<2){boxes.push(box);break;}
+    const ch=widestChannel(box);
+    box.sort((a,b)=>a[ch]-b[ch]);
+    const mid=box.length>>1;
+    boxes.push(box.slice(0,mid),box.slice(mid));
+  }
+  return boxes.map(avg).sort((a,b)=>lum(b)-lum(a));
+}
+function rng(box){let r=[255,255,255],R=[0,0,0];for(const p of box)for(let c=0;c<3;c++){if(p[c]<r[c])r[c]=p[c];if(p[c]>R[c])R[c]=p[c];}return Math.max(R[0]-r[0],R[1]-r[1],R[2]-r[2]);}
+function widestChannel(box){let r=[255,255,255],R=[0,0,0];for(const p of box)for(let c=0;c<3;c++){if(p[c]<r[c])r[c]=p[c];if(p[c]>R[c])R[c]=p[c];}const d=[R[0]-r[0],R[1]-r[1],R[2]-r[2]];return d.indexOf(Math.max(...d));}
+function avg(box){const s=[0,0,0];for(const p of box)for(let c=0;c<3;c++)s[c]+=p[c];return s.map(v=>Math.round(v/box.length));}
+function lum(c){return .2126*c[0]+.7152*c[1]+.0722*c[2];}
+
+// ---- color helpers ----
+const hex=c=>'#'+c.map(v=>v.toString(16).padStart(2,'0')).join('');
+function rgb2hsl(c){let[r,g,b]=c.map(v=>v/255);const mx=Math.max(r,g,b),mn=Math.min(r,g,b);let h,s,l=(mx+mn)/2;if(mx===mn){h=s=0;}else{const d=mx-mn;s=l>.5?d/(2-mx-mn):d/(mx+mn);switch(mx){case r:h=(g-b)/d+(g<b?6:0);break;case g:h=(b-r)/d+2;break;default:h=(r-g)/d+4;}h/=6;}return[Math.round(h*360),Math.round(s*100),Math.round(l*100)];}
+function hsl2rgb(h,s,l){h/=360;s/=100;l/=100;let r,g,b;if(s===0){r=g=b=l;}else{const q=l<.5?l*(1+s):l+s-l*s;const p=2*l-q;const hue=t=>{if(t<0)t+=1;if(t>1)t-=1;if(t<1/6)return p+(q-p)*6*t;if(t<1/2)return q;if(t<2/3)return p+(q-p)*(2/3-t)*6;return p;};r=hue(h+1/3);g=hue(h);b=hue(h-1/3);}return[r,g,b].map(v=>Math.round(v*255));}
+function rot(c,deg){const[h,s,l]=rgb2hsl(c);return hsl2rgb((h+deg+360)%360,s,l);}
+
+// ---- render ----
+function extract(){
+  const n=+$('count').value;
+  S.colors=sample(S.img,n);S.base=0;
+  renderSwatches();renderHarm();
+  $('hint').style.display='none';$('harmwrap').style.display='block';$('expwrap').style.display='block';
+  toast(S.colors.length+' colors extracted');
+}
+$('extract').onclick=extract;
+$('count').oninput=()=>$('cntlbl').textContent=$('count').value;
+function renderSwatches(){
+  const w=$('sw');w.innerHTML='';
+  S.colors.forEach((c,i)=>{
+    const hx=hex(c),[r,g,b]=c;
+    const el=document.createElement('div');el.className='sw'+(i===S.base?' base':'');
+    el.innerHTML='<div class="chip" style="background:'+hx+'"></div><div class="info"><div class="hex">'+hx.toUpperCase()+'</div><div class="rgb">rgb('+r+','+g+','+b+')</div></div>';
+    el.onclick=()=>{navigator.clipboard&&navigator.clipboard.writeText(hx.toUpperCase());S.base=i;renderSwatches();renderHarm();toast('Copied '+hx.toUpperCase());};
+    w.appendChild(el);
+  });
+}
+function renderHarm(){
+  const base=S.colors[S.base];
+  const sets={hcomp:[0,180],hana:[-30,0,30],htri:[0,120,240]};
+  for(const id in sets){const box=$(id);box.innerHTML='';sets[id].forEach(d=>{const c=d===0?base:rot(base,d);const hx=hex(c);const b=document.createElement('div');b.className='hbox';b.style.background=hx;b.title=hx.toUpperCase();b.innerHTML='<span>'+hx.toUpperCase()+'</span>';b.onclick=()=>{navigator.clipboard&&navigator.clipboard.writeText(hx.toUpperCase());toast('Copied '+hx.toUpperCase());};box.appendChild(b);});}
+}
+
+// ---- exports (PNG free; code formats gated) ----
+function genCSS(){return':root{\n'+S.colors.map((c,i)=>'  --color-'+(i+1)+': '+hex(c).toUpperCase()+';').join('\n')+'\n}';}
+function genSCSS(){return S.colors.map((c,i)=>'$color-'+(i+1)+': '+hex(c).toUpperCase()+';').join('\n');}
+function genTW(){return'// tailwind.config.js -> theme.extend.colors\ncolors: {\n'+S.colors.map((c,i)=>'  brand'+(i+1)+": '"+hex(c).toUpperCase()+"',").join('\n')+'\n}';}
+function genJSON(){return JSON.stringify(S.colors.map(c=>{const[h,s,l]=rgb2hsl(c);return{hex:hex(c).toUpperCase(),rgb:'rgb('+c.join(',')+')',hsl:'hsl('+h+','+s+'%,'+l+'%)'};}),null,2);}
+function pngStrip(){
+  const cv=document.createElement('canvas'),n=S.colors.length,w=140,h=180;
+  cv.width=w*n;cv.height=h;const ctx=cv.getContext('2d');
+  S.colors.forEach((c,i)=>{const hx=hex(c).toUpperCase();ctx.fillStyle=hx;ctx.fillRect(i*w,0,w,h);ctx.fillStyle=lum(c)>140?'#000':'#fff';ctx.font='13px -apple-system,Arial';ctx.fillText(hx,i*w+12,h-16);});
+  cv.toBlob(b=>{const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='huepine-palette.png';a.click();});
+}
+document.querySelectorAll('.exports button').forEach(btn=>{
+  btn.onclick=()=>{
+    const f=btn.dataset.fmt;
+    if(f==='png'){pngStrip();toast('PNG downloaded');return;}
+    if(!S.licensed){$('out').value='// Code exports (CSS/SCSS/Tailwind/JSON) unlock with a lifetime license.\n// PNG strip is free. Activate a key in the left panel.';return;}
+    const map={css:genCSS,scss:genSCSS,tw:genTW,json:genJSON};
+    $('out').value=map[f]();
+  };
+});
+$('copyout').onclick=()=>{const o=$('out');if(!o.value)return;navigator.clipboard&&navigator.clipboard.writeText(o.value);toast('Copied');};
+
+// ---- license gate (Lemon Squeezy) ----
+async function validKeyLS(key){
+  try{const r=await fetch('https://api.lemonsqueezy.com/v1/licenses/validate',{method:'POST',headers:{'Accept':'application/json','Content-Type':'application/x-www-form-urlencoded'},body:new URLSearchParams({license_key:key.trim()})});const d=await r.json();return d.valid===true&&d.license_key&&d.license_key.status!=='disabled'&&d.license_key.status!=='expired';}catch(e){return false}
+}
+function setKStat(m,c){const s=$('kstat');s.textContent=m;s.style.color=c||'var(--mut)';}
+$('activate').onclick=async()=>{
+  const k=$('key').value.trim();if(!k){setKStat('Enter your license key.');return;}
+  if(CHECKOUT_URL==="#"){setKStat('License validation goes live at launch.','var(--mut)');return;}
+  setKStat('Checking…');
+  const ok=await validKeyLS(k);S.licensed=ok;
+  if(ok){setKStat('Activated — full exports unlocked.','#3fbf8f');try{localStorage.setItem('huepine_key',k);}catch(e){}}
+  else setKStat('Key not valid.','#e06666');
+};
+$('buy').onclick=e=>{if(CHECKOUT_URL==="#"){e.preventDefault();setKStat('Checkout link goes live at launch.');}else{$('buy').href=CHECKOUT_URL;}};
+(async()=>{try{const k=localStorage.getItem('huepine_key');if(k&&CHECKOUT_URL!=="#"){S.licensed=await validKeyLS(k);if(S.licensed){$('key').value=k;setKStat('Activated — full exports unlocked.','#3fbf8f');}}}catch(e){}})();
+</script>
+</body>
+</html>
