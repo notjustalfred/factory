@@ -174,7 +174,7 @@ function draw(canvas,i,scale){
   const bodySize=Math.round(f.w*0.042);
   ctx.font=`400 ${bodySize}px -apple-system,"Segoe UI",Roboto,sans-serif`;
   ctx.fillStyle=t.fg;
-  wrap(ctx,sl.body||"",f.w-pad*2).forEach(ln=>{ctx.fillText(ln,pad,y);y+=bodySize*1.45;});
+  const maxBodyY=f.h-pad-bodySize*2;wrap(ctx,sl.body||"",f.w-pad*2).forEach(ln=>{if(y>maxBodyY)return;ctx.fillText(ln,pad,y);y+=bodySize*1.45;});
   // footer
   const fy=f.h-pad;
   ctx.textBaseline="alphabetic";
