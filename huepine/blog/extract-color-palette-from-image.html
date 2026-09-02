@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>How to Extract a Color Palette From Any Image (and Actually Get the Hex Codes) — Huepine</title>
+<meta name="description" content="You found the perfect photo. The light, the mood, the exact blue in the corner — you want that palette in your design. So you go to pull the colors out of…">
+<style>
+ :root{--acc:#7c5cff;--bg:#0d0f10;--txt:#e8ebec;--mut:#95a1a5}
+ *{box-sizing:border-box;margin:0}body{font:17px/1.7 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:var(--bg);color:var(--txt)}
+ .wrap{max-width:740px;margin:0 auto;padding:0 24px}
+ header{padding:20px 0;display:flex;align-items:center;gap:10px;max-width:1040px;margin:0 auto}header b{font-size:20px}
+ .cta{background:var(--acc);color:#fff;padding:12px 22px;border-radius:10px;text-decoration:none;font-weight:600;display:inline-block}
+ .cta.sec{background:#1a1e20;border:1px solid #2a3033}
+ article{padding:30px 0 10px}
+ article h1{font-size:clamp(28px,4vw,42px);line-height:1.15;letter-spacing:-.5px;margin:10px 0 6px}
+ .meta{color:var(--mut);font-size:14px;margin-bottom:30px}
+ article h2{font-size:26px;margin:34px 0 10px;letter-spacing:-.3px}
+ article h3{font-size:20px;margin:26px 0 8px}
+ article p{margin:14px 0;color:#d6dbdc}
+ article ul,article ol{margin:14px 0 14px 22px;color:#d6dbdc}article li{margin:6px 0}
+ article a{color:var(--acc)}
+ article strong{color:var(--txt)}
+ article code{background:#15191b;border:1px solid #232a2d;border-radius:5px;padding:1px 6px;font-size:14px}
+ article blockquote{border-left:3px solid var(--acc);margin:16px 0;padding:2px 16px;color:var(--mut)}
+ .endcta{background:#111517;border:1px solid #1d2325;border-radius:14px;padding:26px;margin:40px 0;text-align:center}
+ .endcta h3{margin-bottom:14px}
+ .back{display:inline-block;margin:20px 0;color:var(--mut);text-decoration:none;font-size:14px}
+ footer{text-align:center;color:var(--mut);padding:40px 0;font-size:14px;border-top:1px solid #1a1e20;margin-top:30px}
+</style></head><body>
+<header><b>◑ Huepine</b><span style="flex:1"></span>
+  <a class="cta sec" href="../app/">Open the app</a></header>
+<div class="wrap">
+<a class="back" href="./">← All articles</a>
+<article>
+<h1>How to Extract a Color Palette From Any Image (and Actually Get the Hex Codes)</h1>
+<div class="meta">September 2, 2026</div>
+<p>You found the perfect photo. The light, the mood, the exact blue in the corner — you want that palette in your design. So you go to pull the colors out of the image, and you hit a wall: the tool wants you to upgrade, or sign in, or upload your client's confidential mockup to someone else's server.</p>
+<p>Here is how to get a usable palette from any image in seconds — and how to get the part that actually matters to developers: the code.</p>
+<h2>What "extract a palette" really means</h2>
+<p>Extracting a palette means sampling an image and reducing its thousands of pixel colors down to a handful of representative, dominant ones — usually 3 to 10. Good tools use a quantization method like <strong>median cut</strong>, which repeatedly splits the color space along its widest axis so the final swatches genuinely reflect the image instead of grabbing random pixels.</p>
+<p>The output you want is not just pretty squares. You want:</p>
+<ul>
+<li><strong>HEX codes</strong> you can drop into a design file</li>
+<li><strong>RGB / HSL</strong> values for fine-tuning</li>
+<li><strong>Code</strong> — CSS variables, SCSS, a Tailwind config, JSON — so the palette lands in your project without you retyping six hex codes by hand</li>
+</ul>
+<p>That last part is where most free tools quietly stop.</p>
+<h2>The catch with the popular tools</h2>
+<p><strong>Coolors</strong> is excellent, but its image-palette picker and advanced exports sit behind Coolors Pro. You can make palettes for free; pulling one <em>from your own image</em> and exporting it cleanly is the paid path.</p>
+<p><strong>Adobe Color</strong> extracts from images well, but it wants you signed into an Adobe account, and it is built to feed the Creative Cloud ecosystem rather than hand you a Tailwind config.</p>
+<p><strong>imagecolorpicker.com</strong> and similar sites work, but you upload your image to their server to do it — a non-starter if the image is an unreleased product shot or NDA client work.</p>
+<p>None of these is bad. But if what you want is <em>fast, private, and code-ready</em>, they each make you trade something.</p>
+<h2>The faster path: extract locally in your browser</h2>
+<p>This is the gap <a href="https://notjustalfred.github.io/factory/huepine/">Huepine</a> fills. It is a color-palette extractor that runs <strong>100% in your browser</strong> — your image never gets uploaded anywhere.</p>
+<p>The flow is intentionally short:</p>
+<ol>
+<li><strong>Open the app</strong> and drop in an image (PNG, JPG, or WEBP). Nothing uploads — the file is read locally on your machine.</li>
+<li><strong>Choose 3-10 colors</strong> with a slider and hit <em>Extract</em>. Median-cut sampling pulls the dominant colors and sorts them by luminance, light to dark.</li>
+<li><strong>Click any swatch to copy its HEX</strong> instantly. Click a swatch to also set it as the base for <strong>complementary, analogous, and triadic</strong> harmonies — handy when one color from the photo needs a supporting cast.</li>
+<li><strong>Export.</strong> Get a labeled <strong>PNG palette strip</strong> to drop into a brief or handoff, or generate <strong>CSS variables, SCSS, a Tailwind color config, or JSON</strong> with HEX/RGB/HSL.</li>
+</ol>
+<p>The extraction, the on-screen harmonies, and the PNG strip are free. The <strong>code exports</strong> — the CSS/SCSS/Tailwind/JSON a developer pastes straight into a project — unlock with a one-time lifetime license. No subscription, no account.</p>
+<h2>Why "nothing uploaded" matters more than it sounds</h2>
+<p>If you do client work, the image you are sampling is often something that does not exist publicly yet — a rebrand, a product render, an unannounced app screen. Every browser-based tool that processes your image on a server is a tiny data-handling question you would rather not answer. Huepine sidesteps it: the pixels are read in the page and never leave the tab. Close the tab and there is nothing to clean up.</p>
+<h2>Honest limits</h2>
+<p>It is built to be fast and local, so it is deliberately narrow:</p>
+<ul>
+<li><strong>One image at a time</strong> — no batch processing of a folder.</li>
+<li><strong>No cloud library</strong> — there is no account saving your past palettes; you export what you need and move on.</li>
+<li><strong>No sync</strong> — it lives in the browser tab, not across your devices.</li>
+</ul>
+<p>If your workflow depends on a shared, cloud-synced palette library across a team, a heavier platform is the right call. If you just need the colors out of <em>this</em> image and into your code right now, that overhead is the thing you are trying to avoid.</p>
+<h2>The short version</h2>
+<p>To extract a color palette from an image and get real hex codes:</p>
+<ol>
+<li>Use a tool that samples with median cut and sorts by luminance.</li>
+<li>Make sure it gives you HEX/RGB/HSL, not just swatches.</li>
+<li>If the image is sensitive, use one that runs locally and uploads nothing.</li>
+<li>Get the palette out as <strong>code</strong>, not a screenshot you have to transcribe.</li>
+</ol>
+<p>Drop an image in and see the palette in about two seconds: <strong><a href="https://notjustalfred.github.io/factory/huepine/app/">Open the app</a></strong></p>
+<div class="endcta">
+<h3>Huepine runs entirely in your browser.</h3>
+<a class="cta" href="../app/">Open the app</a>
+</div>
+</article>
+<a class="back" href="./">← All articles</a>
+</div>
+<footer>Huepine — color palettes from your images, extracted locally.</footer>
+</body></html>
