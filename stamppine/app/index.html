@@ -270,7 +270,8 @@ function draw(){
 [['wsize','sizeVal','%'],['wop','opVal','%'],['wrot','rotVal','°'],['quality','qVal','%']].forEach(([id,lab,suf])=>{
   $(id).oninput=()=>{$(lab).textContent=$(id).value+suf;draw();};
 });
-['wtext','wfont','wcolor','tiled'].forEach(id=>$(id).oninput=draw);
+['wtext','wfont','tiled'].forEach(id=>$(id).oninput=draw);
+$('wcolor').oninput=()=>{$('colVal').textContent=$('wcolor').value;draw();};
 document.querySelectorAll('#wtype button').forEach(b=>b.onclick=()=>{
   document.querySelectorAll('#wtype button').forEach(x=>x.classList.remove('on'));
   b.classList.add('on');S.type=b.dataset.t;
@@ -323,7 +324,7 @@ $('export').onclick=async()=>{
   setStatus('Done — '+list.length+' watermarked photo(s) exported.','#7bcf8a');
 };
 
-$('colVal');
+$('colVal').textContent=$('wcolor').value;
 draw();
 </script>
 </body>
