@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Lutpine — Build a color grade, export a real .cube LUT, in your browser</title>
+<style>
+ :root{--acc:#2ec5a7;--bg:#0d0f10;--txt:#e8ebec;--mut:#95a1a5}
+ *{box-sizing:border-box;margin:0}body{font:16px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:var(--bg);color:var(--txt)}
+ .wrap{max-width:1040px;margin:0 auto;padding:0 24px}
+ header{padding:20px 0;display:flex;align-items:center;gap:10px}header b{font-size:20px}
+ .cta{background:var(--acc);color:#04231c;padding:12px 22px;border-radius:10px;text-decoration:none;font-weight:700;display:inline-block}
+ .cta.sec{background:#141a1c;border:1px solid #223033;color:var(--txt)}
+ .hero{text-align:center;padding:70px 0 40px}
+ .hero h1{font-size:clamp(32px,5vw,54px);line-height:1.1;letter-spacing:-1px;margin-bottom:18px}
+ .hero p{font-size:20px;color:var(--mut);max-width:700px;margin:0 auto 30px}
+ .badge{display:inline-block;background:#0f2a25;border:1px solid #1f4d44;color:#8fe6d3;padding:6px 14px;border-radius:20px;font-size:13px;margin-bottom:24px}
+ .demo{margin:40px auto;border-radius:14px;border:1px solid #222;display:flex;height:120px;overflow:hidden}
+ .demo div{flex:1}
+ .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;padding:50px 0}
+ .card{background:#111517;border:1px solid #1d2325;border-radius:12px;padding:24px}
+ .card h3{margin-bottom:8px}.card p{color:var(--mut);font-size:15px}
+ .price{text-align:center;padding:50px 0}
+ .plan{max-width:400px;margin:20px auto;background:#111517;border:2px solid var(--acc);border-radius:16px;padding:34px}
+ .plan .amt{font-size:48px;font-weight:700}.plan .amt s{font-size:24px;color:var(--mut);font-weight:400}
+ .plan ul{list-style:none;text-align:left;margin:20px 0}.plan li{padding:6px 0}.plan li:before{content:"\2713 ";color:var(--acc)}
+ footer{text-align:center;color:var(--mut);padding:40px 0;font-size:14px}
+ .ltd{background:#0f2a25;border:1px solid #1f4d44;border-radius:12px;padding:14px;color:#8fe6d3;font-size:14px;margin-top:16px}
+ @media(max-width:720px){.grid{grid-template-columns:1fr}}
+</style></head><body>
+<div class="wrap">
+ <header><b>◐ Lutpine</b><span style="flex:1"></span>
+   <a class="cta sec" href="app/">Open the app</a></header>
+ <section class="hero">
+   <span class="badge">No signup · No upload · No watermark on LUTs</span>
+   <h1>Design your look. Export a real .cube LUT.</h1>
+   <p>Dial in exposure, contrast, temperature, split-tone and more with live sliders — then export a standard <b>.cube</b> LUT for Premiere, DaVinci Resolve, Final Cut, OBS &amp; ffmpeg, or batch-apply the grade to a whole shoot. Everything runs in your browser. Your footage never leaves your device.</p>
+   <a class="cta" href="app/">Open the app</a>
+   <div class="demo">
+     <div style="background:#20303f"></div><div style="background:#2f5a5a"></div><div style="background:#3f7d6e"></div><div style="background:#c9a86a"></div><div style="background:#e8cf9a"></div>
+   </div>
+ </section>
+ <section class="grid">
+   <div class="card"><h3>Grade with live sliders</h3><p>Exposure, contrast, shadows, highlights, temperature, tint, saturation, vibrance, hue and split-tone — updated in real time.</p></div>
+   <div class="card"><h3>Export a standard .cube</h3><p>17×, 33× or 65× 3D LUTs in the Adobe/IRIDAS 0–1 domain — loads cleanly in Premiere, DaVinci, Final Cut, Photoshop, OBS and ffmpeg.</p></div>
+   <div class="card"><h3>Batch-apply to a whole shoot</h3><p>Drop in dozens of photos and download a ZIP with your grade baked in — no per-photo cap.</p></div>
+   <div class="card"><h3>Nothing uploaded</h3><p>All grading and LUT math run client-side. Your references and client work stay on your machine.</p></div>
+   <div class="card"><h3>Before / after</h3><p>Split-view toggle so you can see exactly what your grade is doing.</p></div>
+   <div class="card"><h3>No account, ever</h3><p>No signup wall between you and your LUT. Open it and grade.</p></div>
+ </section>
+ <section class="price">
+   <h2>One price. Yours for life.</h2>
+   <div class="plan">
+     <div class="amt"><s>$59</s> $29</div>
+     <ul>
+       <li>Unlimited .cube LUT exports (17× / 33× / 65×)</li>
+       <li>Batch-apply grade to unlimited photos</li>
+       <li>Full slider grading + split tone</li>
+       <li>100% local — nothing uploaded</li>
+       <li>Lifetime updates</li>
+     </ul>
+     <a class="cta" href="app/" style="display:block;text-align:center">Open the app</a>
+     <div class="ltd">Lifetime deal — pay once, no subscription.</div>
+   </div>
+ </section>
+</div>
+<footer>Lutpine — design a color grade and export a standard .cube LUT, entirely on your device.</footer>
+</body></html>
