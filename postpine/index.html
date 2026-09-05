@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Postpine - Turn any quote or tweet into a share-ready image</title>
+<style>
+ :root{--acc:#5b8def;--bg:#0d0f10;--txt:#e8ebec;--mut:#95a1a5}
+ *{box-sizing:border-box;margin:0}body{font:16px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:var(--bg);color:var(--txt)}
+ .wrap{max-width:1040px;margin:0 auto;padding:0 24px}
+ header{padding:20px 0;display:flex;align-items:center;gap:10px}header b{font-size:20px}
+ .cta{background:var(--acc);color:#fff;padding:12px 22px;border-radius:10px;text-decoration:none;font-weight:600;display:inline-block}
+ .cta.sec{background:#1a1e20;border:1px solid #2a3033}
+ .hero{text-align:center;padding:70px 0 40px}
+ .hero h1{font-size:clamp(32px,5vw,54px);line-height:1.1;letter-spacing:-1px;margin-bottom:18px}
+ .hero p{font-size:20px;color:var(--mut);max-width:660px;margin:0 auto 30px}
+ .badge{display:inline-block;background:#131c2e;border:1px solid #24365c;color:#9dbcff;padding:6px 14px;border-radius:20px;font-size:13px;margin-bottom:24px}
+ .demo{margin:40px auto;border-radius:14px;border:1px solid #222;background:linear-gradient(135deg,#2a3d6b,#5b8def);padding:60px;text-align:center;color:#fff}
+ .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;padding:50px 0}
+ .card{background:#111517;border:1px solid #1d2325;border-radius:12px;padding:24px}
+ .card h3{margin-bottom:8px}.card p{color:var(--mut);font-size:15px}
+ .price{text-align:center;padding:50px 0}
+ .plan{max-width:400px;margin:20px auto;background:#111517;border:2px solid var(--acc);border-radius:16px;padding:34px}
+ .plan .amt{font-size:48px;font-weight:700}.plan .amt s{font-size:24px;color:var(--mut);font-weight:400}
+ .plan ul{list-style:none;text-align:left;margin:20px 0}.plan li{padding:6px 0}.plan li:before{content:"* ";color:#3fbf8f}
+ footer{text-align:center;color:var(--mut);padding:40px 0;font-size:14px}
+ .ltd{background:#131c2e;border:1px solid #24365c;border-radius:12px;padding:14px;color:#9dbcff;font-size:14px;margin-top:16px}
+ a.back{color:var(--mut);text-decoration:none;font-size:14px}
+ @media(max-width:720px){.grid{grid-template-columns:1fr}}
+</style></head><body>
+<div class="wrap">
+ <header><b>Postpine</b><span style="flex:1"></span>
+   <a class="cta sec" href="app/">Open the app</a></header>
+
+ <section class="hero">
+   <span class="badge">Lifetime deal - no subscription, ever</span>
+   <h1>Turn any quote or tweet<br>into a share-ready image.</h1>
+   <p>Paste a testimonial, a tweet, or your own line - pick a theme and color, and export a crisp PNG for X, Instagram, or LinkedIn. No sign-in, no API to break, nothing uploaded. It just makes the picture.</p>
+   <a class="cta" href="app/">Open the app</a>
+   <div class="demo"><div style="background:#111517;border-radius:10px;padding:34px;box-shadow:0 20px 60px rgba(0,0,0,.4);display:inline-block;color:#fff;text-align:left;max-width:420px">"Most tools want you to sign in, or slap a watermark on your image unless you pay."<div style="margin-top:16px;opacity:.7;font-size:14px">- Jane Rivera, @janerivera</div></div></div>
+ </section>
+
+ <section class="grid">
+   <div class="card"><h3>No API, never breaks</h3><p>Tweet-screenshot tools break every time X changes its API. Postpine reads nothing live - you paste the text, so it always works.</p></div>
+   <div class="card"><h3>100% private</h3><p>Runs entirely in your browser. Nothing is uploaded to any server. Works offline.</p></div>
+   <div class="card"><h3>Themes and colors</h3><p>Clean, ink, gradient, mesh, paper, dark - pick a look, drop in a brand color, done in seconds.</p></div>
+   <div class="card"><h3>Every aspect ratio</h3><p>Twitter, square, 4:5 Instagram, 9:16 story - export the exact size each platform wants.</p></div>
+   <div class="card"><h3>2x crisp PNG</h3><p>Retina-sharp exports with rounded corners and optional avatar. Ready to post as-is.</p></div>
+   <div class="card"><h3>Yours forever</h3><p>One-time payment. No subscription. All future v1 updates included. Nothing to cancel.</p></div>
+ </section>
+
+ <section class="price">
+   <h2>One price. Forever.</h2>
+   <div class="plan">
+     <div class="amt"><s>$39</s> $24</div>
+     <div style="color:var(--mut)">lifetime license - one-time</div>
+     <ul>
+       <li>No watermark on exports</li>
+       <li>All themes (clean, gradient, mesh, dark, paper)</li>
+       <li>Every aspect ratio + custom colors</li>
+       <li>Avatar, name and handle support</li>
+       <li>All future v1 updates</li>
+     </ul>
+     <a class="cta" style="width:100%;text-align:center" href="#" id="buy">Get the lifetime deal</a>
+     <div class="ltd">Private LTD - limited launch pricing. One-time $24, no subscription. Secure checkout via Lemon Squeezy.</div>
+   </div>
+ </section>
+ <p style="text-align:center"><a class="back" href="../">Back to the Creator Toolkit</a></p>
+ <footer>Postpine - turn any quote or tweet into a share-ready image.</footer>
+</div></body></html>

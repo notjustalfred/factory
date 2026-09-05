@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Postpine — turn any quote or tweet into a share-ready image</title>
+<style>
+ :root{--acc:#5b8def;--bg:#0d0f10;--panel:#14171a;--line:#242a2f;--txt:#e8ebec;--mut:#93a0a6}
+ *{box-sizing:border-box;margin:0}
+ body{font:15px/1.55 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;background:var(--bg);color:var(--txt)}
+ .wrap{max-width:1180px;margin:0 auto;padding:0 20px}
+ header{padding:16px 0;display:flex;align-items:center;gap:10px;border-bottom:1px solid var(--line)}
+ header b{font-size:18px}
+ .pill{margin-left:auto;background:#132; color:#3fbf8f;border:1px solid #1c3d30;padding:4px 12px;border-radius:20px;font-size:12px;font-weight:700}
+ .pill.free{background:#1a1d20;color:var(--mut);border-color:var(--line)}
+ .app{display:grid;grid-template-columns:340px 1fr;gap:24px;padding:24px 0 40px}
+ @media(max-width:860px){.app{grid-template-columns:1fr}}
+ .panel{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:18px}
+ label{display:block;font-size:12px;color:var(--mut);margin:14px 0 5px;font-weight:600;letter-spacing:.02em;text-transform:uppercase}
+ label:first-child{margin-top:0}
+ textarea,input[type=text]{width:100%;background:#0d0f10;border:1px solid var(--line);color:var(--txt);border-radius:9px;padding:10px;font:inherit;resize:vertical}
+ textarea{min-height:88px}
+ .row{display:flex;gap:8px}.row>*{flex:1}
+ .swatches,.themes{display:flex;flex-wrap:wrap;gap:8px}
+ .sw{width:34px;height:34px;border-radius:8px;cursor:pointer;border:2px solid transparent}
+ .sw.on{border-color:#fff}
+ .thm{padding:7px 11px;border-radius:8px;border:1px solid var(--line);background:#0d0f10;color:var(--txt);cursor:pointer;font-size:13px}
+ .thm.on{border-color:var(--acc);color:var(--acc)}
+ .thm.pro:after{content:" PRO";font-size:9px;color:#caa94a;font-weight:700}
+ .seg{display:flex;gap:6px;flex-wrap:wrap}
+ .seg button{flex:1;padding:7px 4px;border:1px solid var(--line);background:#0d0f10;color:var(--txt);border-radius:8px;cursor:pointer;font-size:12px}
+ .seg button.on{border-color:var(--acc);color:var(--acc)}
+ .stage{display:flex;flex-direction:column;align-items:center;justify-content:flex-start;gap:16px}
+ .card-outer{width:100%;max-width:560px;display:flex;align-items:center;justify-content:center;background:repeating-conic-gradient(#1a1d20 0% 25%,#101314 0% 50%) 50%/22px 22px;border-radius:14px;padding:18px;border:1px solid var(--line)}
+ #card{width:100%;border-radius:16px;overflow:hidden;position:relative;color:#fff;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
+ #card .inner{padding:44px 40px}
+ #card .quote{font-size:26px;line-height:1.4;font-weight:600;white-space:pre-wrap;word-wrap:break-word}
+ #card .who{display:flex;align-items:center;gap:13px;margin-top:26px}
+ #card .who img{width:48px;height:48px;border-radius:50%;object-fit:cover;background:#0003}
+ #card .who .av{width:48px;height:48px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:20px;background:#ffffff33}
+ #card .who .nm{font-weight:700;font-size:16px}
+ #card .who .hd{font-size:14px;opacity:.72}
+ #card .wm{position:absolute;bottom:10px;right:14px;font-size:12px;opacity:.6;font-weight:600}
+ .btn{display:block;width:100%;padding:12px;border:none;border-radius:10px;background:var(--acc);color:#fff;font-size:15px;font-weight:700;cursor:pointer;margin-top:8px}
+ .btn:disabled{opacity:.5;cursor:not-allowed}
+ .btn.sec{background:#1a1d20;border:1px solid var(--line);color:var(--txt)}
+ .note{font-size:12px;color:var(--mut);margin-top:8px;text-align:center}
+ .gate{margin-top:18px;border-top:1px solid var(--line);padding-top:16px}
+ .gate input{margin-bottom:8px}
+ .lk{color:var(--acc);text-decoration:none}
+ small{color:var(--mut)}
+</style></head>
+<body>
+<div class="wrap">
+<header><b>✦ Postpine</b> <span style="color:var(--mut);font-size:13px">quote &amp; tweet → image · in your browser</span><span class="pill free" id="planPill">FREE</span></header>
+
+<div class="app">
+ <div class="panel">
+  <label>Post text</label>
+  <textarea id="quote" placeholder="Paste a tweet, testimonial, or write a quote…">Most tools want you to sign in, or slap a watermark on your image unless you pay.
+
+Postpine just makes the picture — right here in your browser.</textarea>
+
+  <label>Name</label>
+  <input type="text" id="name" placeholder="Jane Rivera" value="Jane Rivera">
+  <label>Handle / subtitle</label>
+  <input type="text" id="handle" placeholder="@janerivera" value="@janerivera">
+  <label>Avatar (optional)</label>
+  <div class="row"><input type="file" id="avatar" accept="image/*" style="padding:7px;font-size:12px"><button class="thm" id="clearAv" type="button">Clear</button></div>
+
+  <label>Theme</label>
+  <div class="themes" id="themes"></div>
+
+  <label>Accent / background color</label>
+  <div class="swatches" id="swatches"></div>
+
+  <label>Aspect ratio</label>
+  <div class="seg" id="ratio">
+   <button data-r="1.91" class="on">1.91:1 · Twitter</button>
+   <button data-r="1">1:1 · Square</button>
+   <button data-r="0.8">4:5 · IG</button>
+   <button data-r="0.5625">9:16 · Story</button>
+  </div>
+
+  <label>Text size</label>
+  <div class="seg" id="tsize">
+   <button data-s="20">S</button><button data-s="26" class="on">M</button><button data-s="32">L</button><button data-s="40">XL</button>
+  </div>
+
+  <button class="btn" id="dl">⬇ Download PNG (2×)</button>
+  <p class="note" id="note">Free exports include a small “Postpine” mark. Nothing is uploaded.</p>
+
+  <div class="gate">
+   <label>License key</label>
+   <input type="text" id="key" placeholder="Paste your Postpine key">
+   <div class="row">
+    <button class="btn sec" id="apply" type="button">Activate</button>
+    <button class="btn sec" id="buy" type="button">Get a license</button>
+   </div>
+   <p class="note" id="keyStat">PRO removes the watermark + unlocks all themes.</p>
+  </div>
+ </div>
+
+ <div class="stage">
+  <div class="card-outer"><div id="card"><div class="inner">
+   <div class="quote" id="pQuote"></div>
+   <div class="who" id="pWho"></div>
+   <div class="wm" id="pWm">Postpine</div>
+  </div></div></div>
+  <small id="dim"></small>
+ </div>
+</div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script>
+const CHECKOUT_URL="#"; // Postpine Lifetime License — set to LS checkout URL at launch
+const THEMES=[
+ {id:'ink',   name:'Ink',    pro:false, bg:c=>c, fg:'#fff', sub:.72, grad:false},
+ {id:'plain', name:'Clean',  pro:false, bg:_=>'#ffffff', fg:'#111', sub:.6, grad:false},
+ {id:'grad',  name:'Gradient',pro:false, bg:c=>`linear-gradient(135deg,${c},${shade(c,-40)})`, fg:'#fff', sub:.8, grad:true},
+ {id:'dark',  name:'Dark',   pro:true,  bg:_=>'#0e1116', fg:'#fff', accentBar:true, sub:.7},
+ {id:'paper', name:'Paper',  pro:true,  bg:_=>'#f5f1e8', fg:'#2a2622', sub:.6},
+ {id:'mesh',  name:'Mesh',   pro:true,  bg:c=>`radial-gradient(at 20% 20%,${shade(c,30)},transparent 55%),radial-gradient(at 80% 70%,${shade(c,-30)},transparent 55%),${c}`, fg:'#fff', sub:.8}
+];
+const COLORS=['#5b8def','#7c5cff','#e0517a','#e8823a','#2fb47c','#12a5b8','#e5b93a','#111827'];
+const S={theme:'ink', color:'#5b8def', ratio:1.91, size:26, avatar:null, licensed:false};
+
+// helpers
+function shade(hex,amt){let c=hex.replace('#','');if(c.length===3)c=c.split('').map(x=>x+x).join('');let n=parseInt(c,16);let r=Math.max(0,Math.min(255,(n>>16)+amt));let g=Math.max(0,Math.min(255,((n>>8)&255)+amt));let b=Math.max(0,Math.min(255,(n&255)+amt));return'#'+((1<<24)+(r<<16)+(g<<8)+b).toString(16).slice(1)}
+function themeObj(){return THEMES.find(t=>t.id===S.theme)||THEMES[0]}
+function initial(){const n=document.getElementById('name').value.trim();return n?n[0].toUpperCase():'•'}
+
+function renderThemes(){
+ const w=document.getElementById('themes');w.innerHTML='';
+ THEMES.forEach(t=>{const b=document.createElement('button');b.className='thm'+(t.id===S.theme?' on':'')+(t.pro?' pro':'');b.textContent=t.name;
+  b.onclick=()=>{if(t.pro&&!S.licensed){setKeyStat('“'+t.name+'” is a PRO theme — activate a license to use it.',true);return}S.theme=t.id;renderThemes();draw()};w.appendChild(b)});
+}
+function renderSwatches(){
+ const w=document.getElementById('swatches');w.innerHTML='';
+ COLORS.forEach(c=>{const s=document.createElement('div');s.className='sw'+(c===S.color?' on':'');s.style.background=c;s.onclick=()=>{S.color=c;renderSwatches();draw()};w.appendChild(s)});
+}
+function draw(){
+ const t=themeObj();const card=document.getElementById('card');
+ const bg=t.bg(S.color);
+ card.style.background=bg; card.style.color=t.fg;
+ card.style.aspectRatio=S.ratio;
+ // quote
+ const q=document.getElementById('pQuote');q.textContent=document.getElementById('quote').value;
+ q.style.fontSize=S.size+'px';
+ // accent bar for dark theme
+ card.querySelectorAll('.accbar').forEach(e=>e.remove());
+ if(t.accentBar){const bar=document.createElement('div');bar.className='accbar';bar.style.cssText=`position:absolute;left:0;top:0;bottom:0;width:8px;background:${S.color}`;card.appendChild(bar)}
+ // who
+ const who=document.getElementById('pWho');const nm=document.getElementById('name').value.trim();const hd=document.getElementById('handle').value.trim();
+ who.innerHTML='';
+ if(nm||hd||S.avatar){
+  if(S.avatar){const im=document.createElement('img');im.src=S.avatar;who.appendChild(im)}
+  else{const av=document.createElement('div');av.className='av';av.textContent=initial();who.appendChild(av)}
+  const box=document.createElement('div');box.innerHTML=`<div class="nm">${escapeHtml(nm)}</div><div class="hd" style="opacity:${t.sub}">${escapeHtml(hd)}</div>`;who.appendChild(box);
+ }
+ // watermark
+ document.getElementById('pWm').style.display=S.licensed?'none':'block';
+ document.getElementById('pWm').style.color=t.fg;
+ document.getElementById('dim').textContent=`Preview · exports at 2× resolution`;
+}
+function escapeHtml(s){return s.replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]))}
+function setKeyStat(t,err){const e=document.getElementById('keyStat');e.textContent=t;e.style.color=err?'#f56':'var(--mut)'}
+
+// events
+document.getElementById('quote').oninput=draw;
+document.getElementById('name').oninput=draw;
+document.getElementById('handle').oninput=draw;
+document.getElementById('avatar').onchange=e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{S.avatar=r.result;draw()};r.readAsDataURL(f)};
+document.getElementById('clearAv').onclick=()=>{S.avatar=null;document.getElementById('avatar').value='';draw()};
+document.querySelectorAll('#ratio button').forEach(b=>b.onclick=()=>{document.querySelectorAll('#ratio button').forEach(x=>x.classList.remove('on'));b.classList.add('on');S.ratio=parseFloat(b.dataset.r);draw()});
+document.querySelectorAll('#tsize button').forEach(b=>b.onclick=()=>{document.querySelectorAll('#tsize button').forEach(x=>x.classList.remove('on'));b.classList.add('on');S.size=parseInt(b.dataset.s);draw()});
+
+document.getElementById('dl').onclick=async()=>{
+ const card=document.getElementById('card');
+ const btn=document.getElementById('dl');btn.disabled=true;btn.textContent='Rendering…';
+ try{
+  const canvas=await html2canvas(card,{scale:2,backgroundColor:null,useCORS:true,logging:false});
+  const a=document.createElement('a');a.href=canvas.toDataURL('image/png');a.download='postpine.png';a.click();
+  document.getElementById('note').textContent='Saved postpine.png — nothing was uploaded.';
+ }catch(e){document.getElementById('note').textContent='Render failed: '+e.message}
+ btn.disabled=false;btn.textContent='⬇ Download PNG (2×)';
+};
+
+// license — live Lemon Squeezy validation (public endpoint, no secret key)
+async function validKeyLS(key){
+ try{const r=await fetch('https://api.lemonsqueezy.com/v1/licenses/validate',{method:'POST',headers:{'Accept':'application/json','Content-Type':'application/x-www-form-urlencoded'},body:new URLSearchParams({license_key:key.trim()})});const d=await r.json();return d.valid===true&&d.license_key&&d.license_key.status!=='disabled'&&d.license_key.status!=='expired';}catch(e){return false}
+}
+try{const s=localStorage.getItem('postpine_license');if(s)document.getElementById('key').value=s;}catch(e){}
+document.getElementById('apply').onclick=async()=>{
+ const k=document.getElementById('key').value.trim();const p=document.getElementById('planPill');
+ if(!k){setKeyStat('Enter your license key.',true);return}
+ if(CHECKOUT_URL==="#"){setKeyStat('License validation goes live at launch.',false);return}
+ setKeyStat('Checking…',false);
+ const ok=await validKeyLS(k);S.licensed=ok;
+ p.textContent=ok?'PRO':'FREE';p.className='pill'+(ok?'':' free');
+ setKeyStat(ok?'✓ Licensed — watermark removed, all themes unlocked.':'Invalid or inactive key.',!ok);
+ try{ok?localStorage.setItem('postpine_license',k):localStorage.removeItem('postpine_license');}catch(e){}
+ renderThemes();draw();
+};
+document.getElementById('buy').onclick=e=>{if(CHECKOUT_URL==="#"){setKeyStat('Checkout link goes live at launch.',false)}else{location.href=CHECKOUT_URL}};
+
+renderThemes();renderSwatches();draw();
+</script>
+</body></html>
