@@ -1,0 +1,244 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Fitpine — Fit any photo, no crop</title>
+<style>
+:root{--bg:#0d1117;--pan:#161b22;--line:#252c36;--txt:#e6edf3;--mut:#8b949e;--acc:#58c98a;--acc2:#3fbf8f}
+*{box-sizing:border-box}
+body{margin:0;font:15px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;background:var(--bg);color:var(--txt)}
+header{display:flex;align-items:center;gap:10px;padding:12px 18px;border-bottom:1px solid var(--line)}
+header .logo{font-weight:700;font-size:17px;letter-spacing:.3px}
+header .logo span{color:var(--acc)}
+header .tag{color:var(--mut);font-size:13px}
+.pill{margin-left:auto;font-size:12px;font-weight:700;padding:3px 10px;border-radius:20px;background:rgba(88,201,138,.15);color:var(--acc);border:1px solid rgba(88,201,138,.35)}
+.pill.free{background:rgba(139,148,158,.15);color:var(--mut);border-color:var(--line)}
+.wrap{display:flex;min-height:calc(100vh - 52px)}
+aside{width:290px;border-right:1px solid var(--line);padding:16px;overflow:auto}
+main{flex:1;display:flex;flex-direction:column}
+h3{font-size:12px;text-transform:uppercase;letter-spacing:.6px;color:var(--mut);margin:18px 0 8px}
+h3:first-child{margin-top:0}
+.ratios{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.ratio{border:1px solid var(--line);border-radius:8px;padding:8px;cursor:pointer;font-size:13px;text-align:center;background:var(--pan)}
+.ratio.on{border-color:var(--acc);color:var(--acc);background:rgba(88,201,138,.08)}
+.ratio small{display:block;color:var(--mut);font-size:11px}
+.seg{display:flex;gap:6px;flex-wrap:wrap}
+.seg button{flex:1;border:1px solid var(--line);background:var(--pan);color:var(--txt);padding:7px;border-radius:8px;cursor:pointer;font-size:13px}
+.seg button.on{border-color:var(--acc);color:var(--acc)}
+label.row{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:8px 0;font-size:13px;color:var(--mut)}
+input[type=range]{width:130px}
+input[type=color]{width:40px;height:28px;border:1px solid var(--line);border-radius:6px;background:none;padding:0}
+input[type=text],select{width:100%;background:var(--pan);border:1px solid var(--line);color:var(--txt);border-radius:8px;padding:7px}
+.btn{width:100%;border:none;border-radius:9px;padding:12px;font-weight:700;font-size:14px;cursor:pointer;background:var(--acc);color:#08130c}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+#drop{margin:16px;border:2px dashed var(--line);border-radius:12px;padding:34px;text-align:center;color:var(--mut);cursor:pointer}
+#drop.hot{border-color:var(--acc);color:var(--acc)}
+#drop b{color:var(--txt)}
+.hint{font-size:12px;color:var(--mut)}
+#list{flex:1;overflow:auto;padding:0 16px;display:flex;flex-direction:column;gap:8px}
+.file{display:flex;align-items:center;gap:10px;background:var(--pan);border:1px solid var(--line);border-radius:10px;padding:8px}
+.file canvas{width:52px;height:52px;border-radius:6px;background:#0a0e13;flex:none}
+.file .meta{flex:1;min-width:0}
+.file .n{font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.file .d{font-size:12px;color:var(--mut)}
+.file .rm{cursor:pointer;color:var(--mut);padding:4px 8px}
+.foot{padding:14px 16px;border-top:1px solid var(--line)}
+#freeNote{font-size:12px;color:var(--mut);margin-top:8px;text-align:center}
+#bar{height:3px;background:var(--acc);width:0;transition:width .2s}
+#status{padding:8px 16px;font-size:13px;color:var(--mut)}
+.lic{margin-top:18px;border-top:1px solid var(--line);padding-top:14px}
+.lic .k{display:flex;gap:6px;margin-top:6px}
+.lic .k input{flex:1}
+.lic .k button{border:1px solid var(--line);background:var(--pan);color:var(--txt);border-radius:8px;padding:0 12px;cursor:pointer}
+#keyStat{font-size:12px;margin-top:6px;min-height:15px}
+.buy{display:block;text-align:center;margin-top:8px;color:var(--acc);font-size:13px;text-decoration:none}
+</style>
+</head>
+<body>
+<header>
+  <div class="logo">Fit<span>pine</span></div>
+  <div class="tag">Fit any photo into any frame — no crop.</div>
+  <div class="pill free" id="planPill">FREE</div>
+</header>
+<div class="wrap">
+  <aside>
+    <h3>Target frame</h3>
+    <div class="ratios" id="ratios"></div>
+    <h3>Background fill</h3>
+    <div class="seg" id="fill">
+      <button data-f="blur" class="on">Blur</button>
+      <button data-f="color">Color</button>
+      <button data-f="gradient">Gradient</button>
+    </div>
+    <div id="blurCtl">
+      <label class="row">Blur strength <input type="range" id="blur" min="4" max="60" value="28"></label>
+    </div>
+    <div id="colorCtl" style="display:none">
+      <label class="row">Fill color <input type="color" id="col" value="#ffffff"></label>
+    </div>
+    <div id="gradCtl" style="display:none">
+      <label class="row">From <input type="color" id="g1" value="#3fbf8f"></label>
+      <label class="row">To <input type="color" id="g2" value="#0d1117"></label>
+    </div>
+    <label class="row">Inset padding <input type="range" id="pad" min="0" max="20" value="0"></label>
+    <h3>Output</h3>
+    <label class="row">Format
+      <select id="fmt" style="width:120px">
+        <option value="image/jpeg">JPG</option>
+        <option value="image/png">PNG</option>
+        <option value="image/webp">WebP</option>
+      </select>
+    </label>
+    <label class="row">Quality <input type="range" id="q" min="0.6" max="1" step="0.05" value="0.92"><span id="qv">0.92</span></label>
+    <div class="lic">
+      <h3 style="margin-top:0">License</h3>
+      <div class="k">
+        <input type="text" id="key" placeholder="Paste license key">
+        <button id="apply">Apply</button>
+      </div>
+      <div id="keyStat"></div>
+      <a class="buy" id="buy" href="#" target="_blank" rel="noopener">Unlock unlimited batch →</a>
+    </div>
+  </aside>
+  <main>
+    <div id="drop">Drop images here · click to browse · JPG · PNG · WebP · <b>HEIC</b><br><span class="hint">Everything runs on your device. Nothing is uploaded.</span></div>
+    <input type="file" id="file" accept="image/*,.heic,.heif" multiple hidden>
+    <div id="list"></div>
+    <div class="foot">
+      <button class="btn" id="go" disabled>Fit &amp; download all (.zip)</button>
+      <div id="freeNote"></div>
+    </div>
+    <div id="bar"></div>
+    <div id="status">Ready.</div>
+  </main>
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/heic2any@0.0.4/dist/heic2any.min.js"></script>
+<script>
+const FREE_LIMIT=5;
+const CHECKOUT_URL="#"; // Fitpine Lifetime License — set after LS product created
+const RATIOS=[
+  {n:"Square",r:"1:1",w:1080,h:1080},
+  {n:"Portrait",r:"4:5",w:1080,h:1350},
+  {n:"Story/Reel",r:"9:16",w:1080,h:1920},
+  {n:"Landscape",r:"16:9",w:1920,h:1080},
+  {n:"Pinterest",r:"2:3",w:1000,h:1500},
+  {n:"Twitter/X",r:"3:2",w:1600,h:1067},
+];
+const S={files:[],ratio:RATIOS[0],fill:"blur",blur:28,col:"#ffffff",g1:"#3fbf8f",g2:"#0d1117",pad:0,fmt:"image/jpeg",q:0.92,licensed:false};
+// ratio buttons
+const rE=document.getElementById('ratios');
+RATIOS.forEach((rt,i)=>{const d=document.createElement('div');d.className='ratio'+(i===0?' on':'');
+  d.innerHTML=`${rt.n}<small>${rt.r} · ${rt.w}×${rt.h}</small>`;
+  d.onclick=()=>{S.ratio=rt;[...rE.children].forEach(c=>c.classList.remove('on'));d.classList.add('on')};
+  rE.appendChild(d);});
+// fill mode
+document.querySelectorAll('#fill button').forEach(b=>b.onclick=()=>{
+  S.fill=b.dataset.f;document.querySelectorAll('#fill button').forEach(x=>x.classList.remove('on'));b.classList.add('on');
+  colorCtl.style.display=S.fill==='color'?'':'none';
+  blurCtl.style.display=S.fill==='blur'?'':'none';
+  gradCtl.style.display=S.fill==='gradient'?'':'none';
+});
+blur.oninput=e=>S.blur=+e.target.value;
+col.oninput=e=>S.col=e.target.value;
+g1.oninput=e=>S.g1=e.target.value;
+g2.oninput=e=>S.g2=e.target.value;
+pad.oninput=e=>S.pad=+e.target.value;
+fmt.onchange=e=>S.fmt=e.target.value;
+q.oninput=e=>{S.q=+e.target.value;qv.textContent=e.target.value};
+// files
+const drop=document.getElementById('drop'),fileEl=document.getElementById('file');
+drop.onclick=()=>fileEl.click();
+fileEl.onchange=e=>addFiles([...e.target.files]);
+drop.ondragover=e=>{e.preventDefault();drop.classList.add('hot')};
+drop.ondragleave=()=>drop.classList.remove('hot');
+drop.ondrop=e=>{e.preventDefault();drop.classList.remove('hot');addFiles([...e.dataTransfer.files])};
+function isHeic(f){return /heic|heif/i.test(f.type)||/\.(heic|heif)$/i.test(f.name)}
+async function toBitmap(f){
+  if(isHeic(f)){const blob=await heic2any({blob:f,toType:"image/jpeg",quality:0.92});return await createImageBitmap(Array.isArray(blob)?blob[0]:blob);}
+  return await createImageBitmap(f);
+}
+async function addFiles(fs){
+  fs=fs.filter(f=>f.type.startsWith('image')||isHeic(f));
+  for(const f of fs){const item={file:f,name:f.name.replace(/\.[^.]+$/,''),bmp:null,err:null};S.files.push(item);renderList();
+    try{item.bmp=await toBitmap(f);}catch(e){item.err="decode failed";}renderList();}
+  updateGate();
+}
+function renderList(){
+  const L=document.getElementById('list');L.innerHTML='';
+  S.files.forEach((it,i)=>{const d=document.createElement('div');d.className='file';
+    const c=document.createElement('canvas');c.width=c.height=52;
+    if(it.bmp){const x=c.getContext('2d');const s=Math.min(52/it.bmp.width,52/it.bmp.height);const w=it.bmp.width*s,h=it.bmp.height*s;x.drawImage(it.bmp,(52-w)/2,(52-h)/2,w,h);}
+    const meta=document.createElement('div');meta.className='meta';
+    meta.innerHTML=`<div class="n">${it.file.name}</div><div class="d">${it.err?('<span style=color:#f56>'+it.err+'</span>'):it.bmp?(it.bmp.width+'×'+it.bmp.height):'decoding…'}</div>`;
+    const rm=document.createElement('div');rm.className='rm';rm.textContent='✕';rm.onclick=()=>{S.files.splice(i,1);renderList();updateGate()};
+    d.appendChild(c);d.appendChild(meta);d.appendChild(rm);L.appendChild(d);
+  });
+}
+function updateGate(){
+  const ok=S.files.some(f=>f.bmp);const over=!S.licensed&&S.files.length>FREE_LIMIT;
+  document.getElementById('go').disabled=!ok||over;
+  freeNote.textContent=S.licensed?'Unlimited batch unlocked.':`Free tier: up to ${FREE_LIMIT} images per batch (${S.files.length}/${FREE_LIMIT}).`;
+  freeNote.style.color=over?'#f56':'var(--mut)';
+}
+// core: fit whole image, no crop, filled background
+function fitOne(bmp){
+  const W=S.ratio.w,H=S.ratio.h;
+  const c=document.createElement('canvas');c.width=W;c.height=H;const x=c.getContext('2d');
+  // background
+  if(S.fill==='color'){x.fillStyle=S.col;x.fillRect(0,0,W,H);}
+  else if(S.fill==='gradient'){const g=x.createLinearGradient(0,0,W,H);g.addColorStop(0,S.g1);g.addColorStop(1,S.g2);x.fillStyle=g;x.fillRect(0,0,W,H);}
+  else{ // blur: cover-scale the image, blur it, draw as backdrop
+    const cs=Math.max(W/bmp.width,H/bmp.height);const bw=bmp.width*cs,bh=bmp.height*cs;
+    x.filter=`blur(${S.blur}px)`;x.drawImage(bmp,(W-bw)/2,(H-bh)/2,bw,bh);x.filter='none';
+    x.fillStyle='rgba(0,0,0,0.05)';x.fillRect(0,0,W,H);
+  }
+  // foreground: contain the WHOLE image, nothing cropped
+  const padPx=Math.round(Math.min(W,H)*(S.pad/100));
+  const availW=W-padPx*2,availH=H-padPx*2;
+  const s=Math.min(availW/bmp.width,availH/bmp.height);
+  const dw=bmp.width*s,dh=bmp.height*s;
+  x.drawImage(bmp,(W-dw)/2,(H-dh)/2,dw,dh);
+  return c;
+}
+function ext(){return S.fmt==='image/png'?'png':S.fmt==='image/webp'?'webp':'jpg'}
+document.getElementById('go').onclick=async()=>{
+  const usable=S.files.filter(f=>f.bmp);if(!usable.length)return;
+  const zip=new JSZip();let done=0;const total=usable.length;
+  document.getElementById('go').disabled=true;
+  for(const it of usable){
+    const canvas=fitOne(it.bmp);
+    const blob=await new Promise(r=>canvas.toBlob(r,S.fmt,S.q));
+    zip.file(`${it.name}-${S.ratio.w}x${S.ratio.h}.${ext()}`,blob);
+    done++;bar.style.width=(done/total*100)+'%';setStatus(`Fitting ${done}/${total}…`);
+    await new Promise(r=>setTimeout(r));
+  }
+  setStatus('Zipping…');
+  const out=await zip.generateAsync({type:'blob'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(out);a.download='fitpine-export.zip';a.click();
+  setStatus(`Done — ${total} image${total>1?'s':''} in fitpine-export.zip. Nothing was uploaded.`);
+  bar.style.width='0';document.getElementById('go').disabled=false;
+};
+function setStatus(t){document.getElementById('status').textContent=t}
+// license — live Lemon Squeezy validation (public endpoint)
+async function validKeyLS(key){
+  try{const r=await fetch('https://api.lemonsqueezy.com/v1/licenses/validate',{method:'POST',headers:{'Accept':'application/json','Content-Type':'application/x-www-form-urlencoded'},body:new URLSearchParams({license_key:key.trim()})});const d=await r.json();return d.valid===true&&d.license_key&&d.license_key.status!=='disabled'&&d.license_key.status!=='expired';}catch(e){return false}
+}
+try{const s=localStorage.getItem('fitpine_license');if(s)document.getElementById('key').value=s;}catch(e){}
+document.getElementById('apply').onclick=async()=>{
+  const k=document.getElementById('key').value.trim();const st=document.getElementById('keyStat');const p=document.getElementById('planPill');
+  if(!k){st.textContent='Enter your license key.';st.style.color='#f56';return}
+  if(CHECKOUT_URL==="#"){st.textContent='License validation goes live at launch.';st.style.color='var(--mut)';return}
+  st.textContent='Checking…';st.style.color='var(--mut)';
+  const ok=await validKeyLS(k);S.licensed=ok;
+  p.textContent=ok?'PRO':'FREE';p.className='pill'+(ok?'':' free');
+  st.textContent=ok?'✓ Licensed — unlimited batch unlocked.':'Invalid or inactive key.';st.style.color=ok?'#3fbf8f':'#f56';
+  try{ok?localStorage.setItem('fitpine_license',k):localStorage.removeItem('fitpine_license');}catch(e){}
+  updateGate();
+};
+document.getElementById('buy').onclick=e=>{if(CHECKOUT_URL==="#"){e.preventDefault();setStatus('Checkout link goes live at launch.')}else{document.getElementById('buy').href=CHECKOUT_URL}};
+updateGate();
+</script>
+</body>
+</html>
