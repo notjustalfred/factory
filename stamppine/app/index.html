@@ -33,6 +33,7 @@
   .grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
   .grid3 button{padding:10px 0;background:var(--bg);border:1px solid var(--line);color:var(--txt);border-radius:6px;cursor:pointer;font-size:16px}
   .grid3 button.on{background:var(--acc);border-color:var(--acc);color:#fff}
+  .dimmed{opacity:.35;pointer-events:none}
   .btn{width:100%;padding:12px;background:var(--acc);border:none;color:#fff;font-weight:600;border-radius:8px;cursor:pointer;font-size:14px;margin-top:8px}
   .btn:disabled{opacity:.5;cursor:default}
   .btn.sec{background:var(--bg);border:1px solid var(--line)}
@@ -124,6 +125,7 @@
     <div class="row" style="margin-top:10px">
       <label class="two"><input type="checkbox" id="tiled" style="width:auto"> &nbsp;Tile / repeat across whole image</label>
     </div>
+    <div class="hint" id="tileHint" style="display:none">Placement grid ignored while tiling is active.</div>
 
     <div class="sub">Export</div>
     <div class="row">
@@ -270,7 +272,13 @@ function draw(){
 [['wsize','sizeVal','%'],['wop','opVal','%'],['wrot','rotVal','°'],['quality','qVal','%']].forEach(([id,lab,suf])=>{
   $(id).oninput=()=>{$(lab).textContent=$(id).value+suf;draw();};
 });
-['wtext','wfont','tiled'].forEach(id=>$(id).oninput=draw);
+$('wtext').oninput=$('wfont').oninput=draw;
+$('tiled').oninput=()=>{
+  const on=$('tiled').checked;
+  $('pos').classList.toggle('dimmed',on);
+  $('tileHint').style.display=on?'':'none';
+  draw();
+};
 $('wcolor').oninput=()=>{$('colVal').textContent=$('wcolor').value;draw();};
 document.querySelectorAll('#wtype button').forEach(b=>b.onclick=()=>{
   document.querySelectorAll('#wtype button').forEach(x=>x.classList.remove('on'));
