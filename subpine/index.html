@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Subpine — Subtitle editor, converter &amp; resync, 100% in your browser</title>
+<style>
+ :root{--acc:#1f7d9d;--bg:#0d0f10;--txt:#e8ebec;--mut:#95a1a5}
+ *{box-sizing:border-box;margin:0}body{font:16px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:var(--bg);color:var(--txt)}
+ .wrap{max-width:1040px;margin:0 auto;padding:0 24px}
+ header{padding:20px 0;display:flex;align-items:center;gap:10px}header b{font-size:20px}
+ .cta{background:var(--acc);color:#fff;padding:12px 22px;border-radius:10px;text-decoration:none;font-weight:600;display:inline-block}
+ .cta.sec{background:#1a1e20;border:1px solid #2a3033}
+ .hero{text-align:center;padding:70px 0 40px}
+ .hero h1{font-size:clamp(32px,5vw,54px);line-height:1.1;letter-spacing:-1px;margin-bottom:18px}
+ .hero p{font-size:20px;color:var(--mut);max-width:680px;margin:0 auto 30px}
+ .badge{display:inline-block;background:#122029;border:1px solid #24404a;color:#8fcfe0;padding:6px 14px;border-radius:20px;font-size:13px;margin-bottom:24px}
+ .demo{margin:40px auto;border-radius:14px;border:1px solid #222;background:linear-gradient(135deg,#134050,#1f7d9d);padding:60px;text-align:center;color:#fff}
+ .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;padding:50px 0}
+ .card{background:#111517;border:1px solid #1d2325;border-radius:12px;padding:24px}
+ .card h3{margin-bottom:8px}.card p{color:var(--mut);font-size:15px}
+ .price{text-align:center;padding:50px 0}
+ .plan{max-width:400px;margin:20px auto;background:#111517;border:2px solid var(--acc);border-radius:16px;padding:34px}
+ .plan .amt{font-size:48px;font-weight:700}.plan .amt s{font-size:24px;color:var(--mut);font-weight:400}
+ .plan ul{list-style:none;text-align:left;margin:20px 0}.plan li{padding:6px 0}.plan li:before{content:"\2713 ";color:#3fbf8f}
+ footer{text-align:center;color:var(--mut);padding:40px 0;font-size:14px}
+ .ltd{background:#122029;border:1px solid #24404a;border-radius:12px;padding:14px;color:#8fcfe0;font-size:14px;margin-top:16px}
+ @media(max-width:720px){.grid{grid-template-columns:1fr}}
+</style></head><body>
+<div class="wrap">
+ <header><b>&#10059; Subpine</b><span style="flex:1"></span>
+   <a class="cta sec" href="app/">Open the app</a></header>
+
+ <section class="hero">
+   <span class="badge">&#9670; Lifetime deal &mdash; no subscription, ever</span>
+   <h1>Fix, convert &amp; resync<br>your subtitles in seconds.</h1>
+   <p>Drop in an SRT, VTT, or SBV file, fix the text, nudge or stretch the timing to kill that annoying out-of-sync drift, and export to any format. 100% in your browser: nothing is uploaded, nothing is watermarked.</p>
+   <a class="cta" href="app/">Open the app &rarr;</a>
+   <div class="demo"><div style="background:#111517;border-radius:8px;padding:34px;box-shadow:0 20px 60px rgba(0,0,0,.4);display:inline-block;color:#fff">drop a file &rarr; edit &amp; resync &rarr; export any format</div></div>
+ </section>
+
+ <section class="grid">
+   <div class="card"><h3>&#9199; Bulk resync</h3><p>Shift every cue by an exact offset, or scale for a framerate mismatch (23.976&harr;25). Kill drift in one click.</p></div>
+   <div class="card"><h3>&#128274; 100% private</h3><p>Runs entirely on your device. Your files are never uploaded to any server. Works offline.</p></div>
+   <div class="card"><h3>&#128260; Convert anything</h3><p>SRT, VTT, SBV in &mdash; SRT, VTT, TXT transcript, or SBV out. No format lock-in.</p></div>
+   <div class="card"><h3>&#9999;&#65039; Inline editor</h3><p>Edit text and timings in a clean table. Split-second fixes without a steep desktop app.</p></div>
+   <div class="card"><h3>&#128230; Batch mode</h3><p>Load a whole folder of subtitle files, convert and resync them all, download as one zip.</p></div>
+   <div class="card"><h3>&#9851; No watermark, ever</h3><p>One-time payment. No subscription, no watermark, no upload cap. All future v1 updates included.</p></div>
+ </section>
+
+ <section class="price">
+   <h2>One price. Forever.</h2>
+   <div class="plan">
+     <div class="amt"><s>$39</s> $24</div>
+     <div style="color:var(--mut)">lifetime license &middot; one-time</div>
+     <ul>
+       <li>Unlimited cues per file</li>
+       <li>Bulk shift + framerate scale resync</li>
+       <li>SRT / VTT / TXT / SBV export</li>
+       <li>Batch multi-file convert to zip</li>
+       <li>All future v1 updates</li>
+     </ul>
+     <a class="cta" style="width:100%;text-align:center" href="app/" id="buy">Get the lifetime deal</a>
+     <div class="ltd">&#9650; Private LTD &mdash; limited launch pricing. One-time $24, no subscription. Secure checkout via Lemon Squeezy.</div>
+   </div>
+ </section>
+ <footer>Subpine &mdash; subtitle editor, converter &amp; resync, 100% in your browser.</footer>
+</div></body></html>

@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Subpine — Subtitle editor, converter &amp; resync, 100% in your browser</title>
+<script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
+<style>
+  :root{--bg:#0f1214;--panel:#171b1e;--line:#262c30;--txt:#e7ecee;--mut:#94a1a6;--acc:#1f7d9d;}
+  *{box-sizing:border-box}
+  body{margin:0;font:14px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;background:var(--bg);color:var(--txt);height:100vh;display:flex;flex-direction:column}
+  header{display:flex;align-items:center;gap:10px;padding:10px 16px;border-bottom:1px solid var(--line)}
+  header b{font-size:16px}.tag{color:var(--mut);font-size:12px}
+  .wrap{flex:1;display:flex;min-height:0}
+  aside{width:320px;padding:14px;border-right:1px solid var(--line);overflow:auto;background:var(--panel)}
+  main{flex:1;display:flex;flex-direction:column;min-width:0}
+  #drop{margin:14px;border:2px dashed var(--line);border-radius:12px;padding:30px 12px;text-align:center;color:var(--mut);cursor:pointer}
+  #drop.hot{border-color:var(--acc);color:var(--txt)}
+  #tblwrap{flex:1;overflow:auto;padding:0 14px 14px}
+  table{width:100%;border-collapse:collapse;font-size:13px}
+  th{text-align:left;color:var(--mut);font-size:11px;text-transform:uppercase;letter-spacing:.5px;padding:6px 6px;position:sticky;top:0;background:var(--bg)}
+  td{border-top:1px solid var(--line);padding:4px 6px;vertical-align:top}
+  td.idx{color:var(--mut);width:34px}
+  input.t{background:var(--bg);border:1px solid var(--line);color:var(--txt);padding:5px;border-radius:5px;width:110px;font-family:ui-monospace,monospace;font-size:12px}
+  textarea.x{background:var(--bg);border:1px solid var(--line);color:var(--txt);padding:5px;border-radius:5px;width:100%;min-height:38px;resize:vertical;font:13px/1.4 inherit}
+  .rm{color:var(--mut);cursor:pointer;padding:2px 6px}
+  .row{margin-bottom:14px}
+  label{display:block;color:var(--mut);font-size:12px;margin-bottom:5px}
+  .sub{font-size:11px;color:var(--mut);text-transform:uppercase;letter-spacing:.5px;margin:16px 0 8px;border-top:1px solid var(--line);padding-top:14px}
+  input[type=text],input[type=number],select{background:var(--bg);border:1px solid var(--line);color:var(--txt);padding:7px;border-radius:6px;width:100%}
+  .seg{display:flex;gap:6px}.seg button{flex:1;padding:7px;background:var(--bg);border:1px solid var(--line);color:var(--txt);border-radius:6px;cursor:pointer;font-size:12px}
+  .cust{display:flex;gap:6px;align-items:center;margin-top:6px}
+  .btn{width:100%;padding:12px;background:var(--acc);border:none;color:#fff;font-weight:600;border-radius:8px;cursor:pointer;font-size:14px}
+  .btn:disabled{opacity:.5;cursor:default}
+  .btn.sec{background:var(--bg);border:1px solid var(--line)}
+  .keyrow{display:flex;gap:6px}
+  .hint{font-size:11px;color:var(--mut);margin-top:6px}
+  .pill{font-size:10px;padding:2px 7px;border-radius:20px;background:var(--acc);color:#fff}
+  .pill.free{background:#3a4147}
+  #status{padding:10px 16px;border-top:1px solid var(--line);color:var(--mut);font-size:13px;min-height:20px}
+  a{color:var(--acc)}
+  .filechip{display:inline-flex;align-items:center;gap:6px;background:var(--bg);border:1px solid var(--line);border-radius:16px;padding:3px 10px;margin:3px 4px 0 0;font-size:12px}
+  .filechip .x{cursor:pointer;color:var(--mut)}
+  .lock{opacity:.5}
+</style>
+</head>
+<body>
+<header>
+  <b>&#10059; Subpine</b><span class="tag">Subtitle editor, converter &amp; resync &mdash; 100% in your browser, nothing uploaded</span>
+  <span style="flex:1"></span><span id="count" class="tag"></span>
+  <span id="planPill" class="pill free">FREE</span>
+</header>
+<div class="wrap">
+  <aside>
+    <div class="sub" style="margin-top:0;border:0;padding:0">Bulk timing</div>
+    <div class="row">
+      <label>Shift all cues (seconds, +/-)</label>
+      <div class="cust">
+        <input type="number" id="shift" value="0" step="0.1" style="width:100px">
+        <button class="btn sec" id="applyShift" style="width:auto;padding:7px 10px">Shift</button>
+      </div>
+      <div class="hint" id="shiftLock"></div>
+    </div>
+    <div class="row">
+      <label>Scale / framerate fix (multiply times)</label>
+      <div class="cust">
+        <input type="number" id="scale" value="1" step="0.001" style="width:100px">
+        <button class="btn sec" id="applyScale" style="width:auto;padding:7px 10px">Scale</button>
+      </div>
+      <div class="hint">e.g. 0.95904 for 25&rarr;23.976fps, 1.04270 for 23.976&rarr;25.</div>
+    </div>
+
+    <div class="sub">Export format</div>
+    <div class="row"><select id="fmt">
+      <option value="srt">SRT (SubRip)</option>
+      <option value="vtt">VTT (WebVTT)</option>
+      <option value="txt">TXT (plain transcript)</option>
+      <option value="sbv">SBV (YouTube)</option>
+    </select></div>
+    <div class="row"><button class="btn" id="exp" disabled>Export file</button></div>
+
+    <div class="sub">Batch (multiple files)</div>
+    <div id="batchList"></div>
+    <div class="row"><button class="btn sec" id="batchExp" disabled>Convert &amp; download all (.zip)</button>
+      <div class="hint" id="batchNote"></div>
+    </div>
+
+    <div class="sub">License</div>
+    <div class="row">
+      <div class="keyrow"><input type="text" id="key" placeholder="paste license key"><button class="btn sec" style="width:auto" id="apply">Apply</button></div>
+      <div class="hint" id="keyStat"></div>
+      <div class="hint" id="freeNote"></div>
+      <div class="hint">No key? <a href="#" id="buy" target="_blank">Get a lifetime license &mdash; $24, one-time</a></div>
+    </div>
+  </aside>
+  <main>
+    <div id="drop">Drop subtitle files here &middot; click to browse &middot; <b>SRT &middot; VTT &middot; SBV</b><br><span class="hint">Everything runs on your device. Nothing is uploaded.</span></div>
+    <input type="file" id="file" accept=".srt,.vtt,.sbv,text/plain" multiple hidden>
+    <div id="tblwrap"><table><thead><tr><th>#</th><th>Start</th><th>End</th><th>Text</th><th></th></tr></thead><tbody id="cues"></tbody></table></div>
+    <div id="status">Ready. Load a subtitle file to begin.</div>
+  </main>
+</div>
+<script>
+const FREE_CUE_LIMIT=40;
+const CHECKOUT_URL="#"; // Subpine Lifetime License - set to LS checkout URL at launch
+const S={cues:[],name:"subtitles",batch:[],licensed:false};
+function pad(n,l){n=Math.floor(n);return String(n).padStart(l||2,'0')}
+function msToSrt(ms){const s=ms/1000;return pad(s/3600)+':'+pad((s%3600)/60)+':'+pad(s%60)+','+pad(ms%1000,3)}
+function msToVtt(ms){return msToSrt(ms).replace(',','.')}
+function msToSbv(ms){const s=ms/1000;return pad(s/3600)+':'+pad((s%3600)/60)+':'+pad(s%60)+'.'+pad(ms%1000,3)}
+function parseTime(t){
+  t=t.trim().replace(',','.');
+  const m=t.match(/(?:(\d+):)?(\d{1,2}):(\d{1,2})(?:\.(\d{1,3}))?/);
+  if(!m)return null;
+  const h=+(m[1]||0),mi=+m[2],se=+m[3],frac=m[4]?+((m[4]+'00').slice(0,3)):0;
+  return ((h*3600+mi*60+se)*1000)+frac;
+}
+function parseSRT(txt){
+  const out=[];const blocks=txt.replace(/\r/g,'').split(/\n\s*\n/);
+  for(const b of blocks){
+    const lines=b.split('\n').filter(l=>l.trim()!=='');
+    if(!lines.length)continue;
+    let i=0;if(/^\d+$/.test(lines[0].trim()))i=1;
+    if(!lines[i])continue;
+    const tm=lines[i].match(/(.+?)\s*-->\s*(.+)/);if(!tm)continue;
+    const start=parseTime(tm[1]),end=parseTime(tm[2]);if(start==null||end==null)continue;
+    out.push({start,end,text:lines.slice(i+1).join('\n')});
+  }
+  return out;
+}
+function parseVTT(txt){txt=txt.replace(/\r/g,'').replace(/^WEBVTT.*?\n/,'');return parseSRT(txt);}
+function parseSBV(txt){
+  const out=[];const blocks=txt.replace(/\r/g,'').split(/\n\s*\n/);
+  for(const b of blocks){
+    const lines=b.split('\n').filter(l=>l.trim()!=='');
+    if(!lines.length)continue;
+    const tm=lines[0].match(/(.+?),(.+)/);if(!tm)continue;
+    const start=parseTime(tm[1]),end=parseTime(tm[2]);if(start==null||end==null)continue;
+    out.push({start,end,text:lines.slice(1).join('\n')});
+  }
+  return out;
+}
+function parseAny(name,txt){
+  if(/\.vtt$/i.test(name)||/^WEBVTT/.test(txt))return parseVTT(txt);
+  if(/\.sbv$/i.test(name))return parseSBV(txt);
+  return parseSRT(txt);
+}
+function toSRT(cues){return cues.map((c,i)=>(i+1)+'\n'+msToSrt(c.start)+' --> '+msToSrt(c.end)+'\n'+c.text).join('\n\n')+'\n'}
+function toVTT(cues){return 'WEBVTT\n\n'+cues.map(c=>msToVtt(c.start)+' --> '+msToVtt(c.end)+'\n'+c.text).join('\n\n')+'\n'}
+function toTXT(cues){return cues.map(c=>c.text.replace(/\n/g,' ')).join('\n')+'\n'}
+function toSBV(cues){return cues.map(c=>msToSbv(c.start)+','+msToSbv(c.end)+'\n'+c.text).join('\n\n')+'\n'}
+function serialize(cues,fmt){return fmt==='vtt'?toVTT(cues):fmt==='txt'?toTXT(cues):fmt==='sbv'?toSBV(cues):toSRT(cues)}
+const drop=document.getElementById('drop'),fileEl=document.getElementById('file');
+drop.onclick=()=>fileEl.click();
+fileEl.onchange=e=>addFiles([...e.target.files]);
+drop.ondragover=e=>{e.preventDefault();drop.classList.add('hot')};
+drop.ondragleave=()=>drop.classList.remove('hot');
+drop.ondrop=e=>{e.preventDefault();drop.classList.remove('hot');addFiles([...e.dataTransfer.files])};
+function readText(f){return new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(r.result);r.onerror=rej;r.readAsText(f)})}
+async function addFiles(fs){
+  fs=fs.filter(f=>/\.(srt|vtt|sbv)$/i.test(f.name)||f.type==='text/plain');
+  if(!fs.length){setStatus('Unsupported file - use SRT, VTT, or SBV.');return}
+  for(const f of fs){
+    const txt=await readText(f);
+    const cues=parseAny(f.name,txt);
+    S.batch.push({name:f.name.replace(/\.[^.]+$/,''),cues});
+    if(S.cues.length===0){S.cues=cues;S.name=f.name.replace(/\.[^.]+$/,'');}
+  }
+  renderCues();renderBatch();
+  setStatus('Loaded '+fs.length+' file'+(fs.length>1?'s':'')+'. '+S.cues.length+' cues in editor.');
+}
+function renderCues(){
+  const tb=document.getElementById('cues');tb.innerHTML='';
+  const limited=!S.licensed && S.cues.length>FREE_CUE_LIMIT;
+  S.cues.forEach((c,i)=>{
+    const locked=limited && i>=FREE_CUE_LIMIT;
+    const tr=document.createElement('tr');if(locked)tr.className='lock';
+    tr.innerHTML='<td class="idx">'+(i+1)+'</td>'+
+      '<td><input class="t" value="'+msToSrt(c.start)+'"'+(locked?' disabled':'')+' data-i="'+i+'" data-k="start"></td>'+
+      '<td><input class="t" value="'+msToSrt(c.end)+'"'+(locked?' disabled':'')+' data-i="'+i+'" data-k="end"></td>'+
+      '<td><textarea class="x"'+(locked?' disabled':'')+' data-i="'+i+'" data-k="text"></textarea></td>'+
+      '<td><span class="rm" data-i="'+i+'">&#10005;</span></td>';
+    tb.appendChild(tr);
+    tr.querySelector('textarea').value=c.text;
+  });
+  tb.querySelectorAll('input.t,textarea.x').forEach(el=>{
+    el.onchange=()=>{const i=+el.dataset.i,k=el.dataset.k;
+      if(k==='text')S.cues[i].text=el.value;
+      else{const ms=parseTime(el.value);if(ms!=null)S.cues[i][k]=ms;else el.value=msToSrt(S.cues[i][k]);}
+    };
+  });
+  tb.querySelectorAll('.rm').forEach(el=>el.onclick=()=>{S.cues.splice(+el.dataset.i,1);renderCues();updateGate()});
+  document.getElementById('count').textContent=S.cues.length?S.cues.length+' cues':'';
+  updateGate();
+}
+function renderBatch(){
+  const bl=document.getElementById('batchList');bl.innerHTML='';
+  S.batch.forEach((b,i)=>{
+    const c=document.createElement('span');c.className='filechip';
+    c.innerHTML=b.name+' <span class="x" data-i="'+i+'">&#10005;</span>';
+    c.querySelector('.x').onclick=()=>{S.batch.splice(i,1);renderBatch();updateGate()};
+    bl.appendChild(c);
+  });
+  updateGate();
+}
+function updateGate(){
+  const has=S.cues.length>0;
+  document.getElementById('exp').disabled=!has;
+  document.getElementById('batchExp').disabled=S.batch.length<2;
+  const overCues=!S.licensed && S.cues.length>FREE_CUE_LIMIT;
+  document.getElementById('freeNote').textContent=S.licensed?'':('Free tier: first '+FREE_CUE_LIMIT+' cues editable/exported'+(overCues?' - '+S.cues.length+' loaded, upgrade to unlock all':'')+'.');
+  document.getElementById('freeNote').style.color=overCues?'#f56':'var(--mut)';
+  document.getElementById('batchNote').textContent=S.licensed?'':(S.batch.length>1?'Batch zip is a Pro feature.':'Add 2+ files for batch (Pro).');
+  document.getElementById('shiftLock').textContent=S.licensed?'':'Bulk shift & scale are Pro features.';
+}
+document.getElementById('fmt').onchange=updateGate;
+document.getElementById('applyShift').onclick=()=>{
+  if(!S.licensed){setStatus('Bulk shift is a Pro feature - add a license key to unlock.');return}
+  const d=+document.getElementById('shift').value*1000;if(!d){return}
+  S.cues.forEach(c=>{c.start=Math.max(0,c.start+d);c.end=Math.max(0,c.end+d)});
+  renderCues();setStatus('Shifted all cues by '+(d/1000)+'s.');
+};
+document.getElementById('applyScale').onclick=()=>{
+  if(!S.licensed){setStatus('Scale is a Pro feature - add a license key to unlock.');return}
+  const k=+document.getElementById('scale').value;if(!k||k<=0){return}
+  S.cues.forEach(c=>{c.start=Math.round(c.start*k);c.end=Math.round(c.end*k)});
+  renderCues();setStatus('Scaled all cue times by x'+k+'.');
+};
+function exportCues(){return (!S.licensed && S.cues.length>FREE_CUE_LIMIT)?S.cues.slice(0,FREE_CUE_LIMIT):S.cues}
+document.getElementById('exp').onclick=()=>{
+  const fmt=document.getElementById('fmt').value;
+  if((fmt==='txt'||fmt==='sbv') && !S.licensed){setStatus('TXT/SBV export is a Pro feature. SRT & VTT are free.');return}
+  const data=serialize(exportCues(),fmt);
+  const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([data],{type:'text/plain'}));
+  a.download=S.name+'.'+fmt;a.click();
+  setStatus('Exported '+S.name+'.'+fmt+' - '+exportCues().length+' cues. Nothing was uploaded.');
+};
+document.getElementById('batchExp').onclick=async()=>{
+  if(!S.licensed){setStatus('Batch zip is a Pro feature - add a license key to unlock.');return}
+  const fmt=document.getElementById('fmt').value;
+  const shift=+document.getElementById('shift').value*1000, scale=+document.getElementById('scale').value;
+  const zip=new JSZip();
+  for(const b of S.batch){
+    let cues=b.cues.map(c=>({...c}));
+    if(scale&&scale>0&&scale!==1)cues.forEach(c=>{c.start=Math.round(c.start*scale);c.end=Math.round(c.end*scale)});
+    if(shift)cues.forEach(c=>{c.start=Math.max(0,c.start+shift);c.end=Math.max(0,c.end+shift)});
+    zip.file(b.name+'.'+fmt,serialize(cues,fmt));
+  }
+  const out=await zip.generateAsync({type:'blob'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(out);a.download='subpine-export.zip';a.click();
+  setStatus('Exported '+S.batch.length+' files to subpine-export.zip. Nothing was uploaded.');
+};
+function setStatus(t){document.getElementById('status').textContent=t}
+async function validKeyLS(key){
+  try{const r=await fetch('https://api.lemonsqueezy.com/v1/licenses/validate',{method:'POST',headers:{'Accept':'application/json','Content-Type':'application/x-www-form-urlencoded'},body:new URLSearchParams({license_key:key.trim()})});const d=await r.json();return d.valid===true&&d.license_key&&d.license_key.status!=='disabled'&&d.license_key.status!=='expired';}catch(e){return false}
+}
+try{const s=localStorage.getItem('subpine_license');if(s)document.getElementById('key').value=s;}catch(e){}
+document.getElementById('apply').onclick=async()=>{
+  const k=document.getElementById('key').value.trim();const st=document.getElementById('keyStat');const p=document.getElementById('planPill');
+  if(!k){st.textContent='Enter your license key.';st.style.color='#f56';return}
+  if(CHECKOUT_URL==="#"){st.textContent='License validation goes live at launch.';st.style.color='var(--mut)';return}
+  st.textContent='Checking...';st.style.color='var(--mut)';
+  const ok=await validKeyLS(k);S.licensed=ok;
+  p.textContent=ok?'PRO':'FREE';p.className='pill'+(ok?'':' free');
+  st.textContent=ok?'Licensed - all features unlocked.':'Invalid or inactive key.';st.style.color=ok?'#3fbf8f':'#f56';
+  try{ok?localStorage.setItem('subpine_license',k):localStorage.removeItem('subpine_license');}catch(e){}
+  renderCues();updateGate();
+};
+document.getElementById('buy').onclick=e=>{if(CHECKOUT_URL==="#"){e.preventDefault();setStatus('Checkout link goes live at launch.')}else{document.getElementById('buy').href=CHECKOUT_URL}};
+updateGate();
+</script>
+</body>
+</html>
