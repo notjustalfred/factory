@@ -309,6 +309,8 @@ document.getElementById('pageNums').checked=S.pageNums;
 [...fbox.children].forEach(c=>c.className=c.textContent===S.format?"on":"");
 [...tbox.children].forEach((c,i)=>c.className="sw"+(Object.keys(THEMES)[i]===S.theme?" on":""));
 renderAll();
+// update status for returning users
+if(localStorage.getItem('slidepine_state'))setStatus(S.slides.length+' slide'+(S.slides.length>1?'s':'')+' loaded — ready.');
 </script>
 </body>
 </html>
