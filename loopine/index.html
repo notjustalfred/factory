@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Loopine — Make animated GIFs in your browser, nothing uploaded</title>
+<style>
+ :root{--acc:#a855f7;--bg:#0d0f10;--txt:#e8ebec;--mut:#95a1a5}
+ *{box-sizing:border-box;margin:0}body{font:16px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:var(--bg);color:var(--txt)}
+ .wrap{max-width:1040px;margin:0 auto;padding:0 24px}
+ header{padding:20px 0;display:flex;align-items:center;gap:10px}header b{font-size:20px}
+ .cta{background:var(--acc);color:#fff;padding:12px 22px;border-radius:10px;text-decoration:none;font-weight:600;display:inline-block}
+ .cta.sec{background:#1a1e20;border:1px solid #2a3033}
+ .hero{text-align:center;padding:70px 0 40px}
+ .hero h1{font-size:clamp(32px,5vw,54px);line-height:1.1;letter-spacing:-1px;margin-bottom:18px}
+ .hero p{font-size:20px;color:var(--mut);max-width:660px;margin:0 auto 30px}
+ .badge{display:inline-block;background:#1e1230;border:1px solid #3a2456;color:#d6b8f5;padding:6px 14px;border-radius:20px;font-size:13px;margin-bottom:24px}
+ .demo{margin:40px auto;border-radius:14px;border:1px solid #222;background:linear-gradient(135deg,#4a1e7a,#a855f7);padding:60px;text-align:center;color:#fff}
+ .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;padding:50px 0}
+ .card{background:#111517;border:1px solid #1d2325;border-radius:12px;padding:24px}
+ .card h3{margin-bottom:8px}.card p{color:var(--mut);font-size:15px}
+ .price{text-align:center;padding:50px 0}
+ .plan{max-width:400px;margin:20px auto;background:#111517;border:2px solid var(--acc);border-radius:16px;padding:34px}
+ .plan .amt{font-size:48px;font-weight:700}.plan .amt s{font-size:24px;color:var(--mut);font-weight:400}
+ .plan ul{list-style:none;text-align:left;margin:20px 0}.plan li{padding:6px 0}.plan li:before{content:"\2713 ";color:#c58cf5}
+ footer{text-align:center;color:var(--mut);padding:40px 0;font-size:14px}
+ .ltd{background:#1e1230;border:1px solid #3a2456;border-radius:12px;padding:14px;color:#d6b8f5;font-size:14px;margin-top:16px}
+ @media(max-width:720px){.grid{grid-template-columns:1fr}}
+</style></head><body>
+<div class="wrap">
+ <header><b>&#9673; Loopine</b><span style="flex:1"></span>
+   <a class="cta sec" href="app/">Open the app</a></header>
+
+ <section class="hero">
+   <span class="badge">&#9670; Lifetime deal — no subscription, ever</span>
+   <h1>Turn your photos into<br>a clean animated GIF.</h1>
+   <p>Drop in a stack of images, set the speed, and export a GIF in one click. No watermark on paid, no 360&times;360 HD wall, no signup. 100% in your browser: nothing is uploaded, nothing leaves your device.</p>
+   <a class="cta" href="app/">Open the app &rarr;</a>
+   <div class="demo"><div style="background:#111517;border-radius:8px;padding:34px;box-shadow:0 20px 60px rgba(0,0,0,.4);display:inline-block;color:#fff">frames in &rarr; GIF out, on your device</div></div>
+ </section>
+
+ <section class="grid">
+   <div class="card"><h3>&#127909; Frames &rarr; GIF</h3><p>Drop images, reorder them, set frames-per-second, and render a smooth animated GIF instantly.</p></div>
+   <div class="card"><h3>&#128274; 100% private</h3><p>Encoding runs entirely on your device in a Web Worker. Your images are never uploaded. Works offline.</p></div>
+   <div class="card"><h3>&#127775; No HD wall</h3><p>Full resolution on paid — no 360&times;360 cap, no forced downscale, no ugly watermark on your GIFs.</p></div>
+   <div class="card"><h3>&#9889; Full control</h3><p>Speed, output width, loop count, and quality/dither — dial in exactly the GIF you want.</p></div>
+   <div class="card"><h3>&#128100; No signup</h3><p>Open the page and start. No account, no email, no upsell popups blocking your work.</p></div>
+   <div class="card"><h3>&#9854;&#65039; Yours forever</h3><p>One-time payment. No subscription. All future v1 updates included. Nothing to cancel.</p></div>
+ </section>
+
+ <section class="price">
+   <h2>One price. Forever.</h2>
+   <div class="plan">
+     <div class="amt"><s>$49</s> $29</div>
+     <div style="color:var(--mut)">lifetime license &middot; one-time</div>
+     <ul>
+       <li>Unlimited frames</li>
+       <li>Full resolution &mdash; no HD wall</li>
+       <li>No watermark</li>
+       <li>Speed, loop, quality control</li>
+       <li>All future v1 updates</li>
+     </ul>
+     <a class="cta" style="width:100%;text-align:center" href="#" id="buy">Get the lifetime deal</a>
+     <div class="ltd">&#9650; Private LTD — limited launch pricing. One-time $29, no subscription. Secure checkout via Lemon Squeezy.</div>
+   </div>
+ </section>
+ <footer>Loopine — make animated GIFs in your browser, nothing uploaded.</footer>
+</div></body></html>

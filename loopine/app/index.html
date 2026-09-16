@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Loopine — Make animated GIFs in your browser, nothing uploaded</title>
+<script src="https://cdn.jsdelivr.net/npm/gif.js.optimized@1.0.1/dist/gif.js"></script>
+<style>
+  :root{--bg:#0f1214;--panel:#171b1e;--line:#262c30;--txt:#e7ecee;--mut:#94a1a6;--acc:#a855f7;}
+  *{box-sizing:border-box}
+  body{margin:0;font:14px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;background:var(--bg);color:var(--txt);height:100vh;display:flex;flex-direction:column}
+  header{display:flex;align-items:center;gap:10px;padding:10px 16px;border-bottom:1px solid var(--line)}
+  header b{font-size:16px}.tag{color:var(--mut);font-size:12px}
+  .wrap{flex:1;display:flex;min-height:0}
+  aside{width:310px;padding:14px;border-right:1px solid var(--line);overflow:auto;background:var(--panel)}
+  main{flex:1;display:flex;flex-direction:column;min-width:0}
+  #drop{margin:14px;border:2px dashed var(--line);border-radius:12px;padding:30px 12px;text-align:center;color:var(--mut);cursor:pointer}
+  #drop.hot{border-color:var(--acc);color:var(--txt)}
+  #list{flex:1;overflow:auto;padding:0 14px 14px;display:flex;flex-wrap:wrap;gap:8px;align-content:flex-start}
+  .frame{position:relative;width:82px;border:1px solid var(--line);border-radius:8px;overflow:hidden;background:#000}
+  .frame img{width:82px;height:82px;object-fit:cover;display:block}
+  .frame .idx{position:absolute;top:2px;left:3px;background:rgba(0,0,0,.6);font-size:10px;padding:1px 5px;border-radius:10px}
+  .frame .rm{position:absolute;top:2px;right:3px;background:rgba(0,0,0,.6);cursor:pointer;font-size:11px;padding:1px 5px;border-radius:10px}
+  .frame .mv{position:absolute;bottom:2px;width:100%;display:flex;justify-content:space-between;padding:0 4px}
+  .frame .mv span{background:rgba(0,0,0,.6);cursor:pointer;font-size:11px;padding:0 6px;border-radius:8px}
+  .row{margin-bottom:14px}
+  label{display:block;color:var(--mut);font-size:12px;margin-bottom:5px}
+  .sub{font-size:11px;color:var(--mut);text-transform:uppercase;letter-spacing:.5px;margin:16px 0 8px;border-top:1px solid var(--line);padding-top:14px}
+  input[type=range]{width:100%}
+  input[type=text],input[type=number],select{background:var(--bg);border:1px solid var(--line);color:var(--txt);padding:7px;border-radius:6px;width:100%}
+  .btn{width:100%;padding:12px;background:var(--acc);border:none;color:#fff;font-weight:600;border-radius:8px;cursor:pointer;font-size:14px}
+  .btn:disabled{opacity:.5;cursor:default}
+  .btn.sec{background:var(--bg);border:1px solid var(--line)}
+  .keyrow{display:flex;gap:6px}
+  .hint{font-size:11px;color:var(--mut);margin-top:6px}
+  .pill{font-size:10px;padding:2px 7px;border-radius:20px;background:var(--acc);color:#fff}
+  .pill.free{background:#3a4147}
+  #status{padding:10px 16px;border-top:1px solid var(--line);color:var(--mut);font-size:13px;min-height:20px}
+  #bar{height:4px;background:var(--acc);width:0;transition:width .2s}
+  #preview{flex:1;display:flex;align-items:center;justify-content:center;overflow:auto;padding:14px}
+  #preview img{max-width:100%;max-height:100%;border:1px solid var(--line);border-radius:8px;background:#000}
+  a{color:var(--acc)}
+</style>
+</head>
+<body>
+<header>
+  <b>&#9673; Loopine</b><span class="tag">Photos &rarr; animated GIF, 100% in your browser &mdash; nothing uploaded</span>
+  <span style="flex:1"></span><span id="count" class="tag"></span>
+  <span id="planPill" class="pill free">FREE</span>
+</header>
+<div class="wrap">
+  <aside>
+    <div class="sub" style="margin-top:0;border:0;padding:0">Timing</div>
+    <div class="row"><label>Speed <span id="fpsv">5</span> fps (frame delay <span id="delayv">200</span>ms)</label><input type="range" id="fps" min="1" max="30" step="1" value="5"></div>
+
+    <div class="sub">Output</div>
+    <div class="row"><label>Max width <span id="wv">480</span>px</label><input type="range" id="w" min="120" max="1200" step="20" value="480"></div>
+    <div class="row"><label>Quality <span id="qv">10</span> (lower = better, slower)</label><input type="range" id="q" min="1" max="30" step="1" value="10"></div>
+    <div class="row"><label>Loop</label><select id="loop"><option value="0">Forever</option><option value="1">Once</option><option value="3">3 times</option><option value="5">5 times</option></select></div>
+
+    <div class="sub">License</div>
+    <div class="row">
+      <div class="keyrow"><input type="text" id="key" placeholder="paste license key"><button class="btn sec" style="width:auto" id="apply">Apply</button></div>
+      <div class="hint" id="keyStat"></div>
+      <div class="hint" id="freeNote"></div>
+      <div class="hint">No key? <a href="#" id="buy" target="_blank">Get a lifetime license &mdash; $29, one-time</a></div>
+    </div>
+  </aside>
+  <main>
+    <div id="drop">Drop images here &middot; click to browse &middot; JPG &middot; PNG &middot; WebP<br><span class="hint">Frames animate top-left to bottom-right. Reorder below. Nothing is uploaded.</span></div>
+    <input type="file" id="file" accept="image/*" multiple hidden>
+    <div id="list"></div>
+    <div id="preview"></div>
+    <div style="padding:14px;border-top:1px solid var(--line);display:flex;gap:10px">
+      <button class="btn" id="go" disabled>Make GIF</button>
+      <button class="btn sec" id="dl" style="display:none" disabled>Download .gif</button>
+    </div>
+    <div id="bar"></div>
+    <div id="status">Ready. Add 2+ images to build a GIF.</div>
+  </main>
+</div>
+<script>
+const FREE_FRAMES=10, FREE_MAXW=480;
+const CHECKOUT_URL="#"; // Loopine Lifetime License — set when LS product exists
+const S={frames:[],fps:5,maxw:480,q:10,loop:0,licensed:false,lastBlob:null};
+const $=id=>document.getElementById(id);
+function setStatus(t){$('status').textContent=t}
+// controls
+$('fps').oninput=e=>{S.fps=+e.target.value;$('fpsv').textContent=e.target.value;$('delayv').textContent=Math.round(1000/S.fps)};
+$('w').oninput=e=>{S.maxw=+e.target.value;$('wv').textContent=e.target.value;updateGate()};
+$('q').oninput=e=>{S.q=+e.target.value;$('qv').textContent=e.target.value};
+$('loop').onchange=e=>S.loop=+e.target.value;
+// files
+const drop=$('drop'),fileEl=$('file');
+drop.onclick=()=>fileEl.click();
+fileEl.onchange=e=>addFiles([...e.target.files]);
+drop.ondragover=e=>{e.preventDefault();drop.classList.add('hot')};
+drop.ondragleave=()=>drop.classList.remove('hot');
+drop.ondrop=e=>{e.preventDefault();drop.classList.remove('hot');addFiles([...e.dataTransfer.files])};
+async function addFiles(fs){
+  fs=fs.filter(f=>f.type.startsWith('image'));
+  for(const f of fs){
+    try{const bmp=await createImageBitmap(f);S.frames.push({bmp,url:URL.createObjectURL(f)});}catch(e){}
+  }
+  renderList();updateGate();
+}
+function renderList(){
+  const L=$('list');L.innerHTML='';
+  S.frames.forEach((fr,i)=>{
+    const d=document.createElement('div');d.className='frame';
+    d.innerHTML=`<span class="idx">${i+1}</span><span class="rm">&times;</span><img src="${fr.url}"><div class="mv"><span data-a="l">&#8592;</span><span data-a="r">&#8594;</span></div>`;
+    d.querySelector('.rm').onclick=()=>{S.frames.splice(i,1);renderList();updateGate()};
+    d.querySelectorAll('.mv span').forEach(s=>s.onclick=()=>{const j=s.dataset.a==='l'?i-1:i+1;if(j<0||j>=S.frames.length)return;[S.frames[i],S.frames[j]]=[S.frames[j],S.frames[i]];renderList()});
+    L.appendChild(d);
+  });
+  $('count').textContent=S.frames.length?S.frames.length+' frame'+(S.frames.length>1?'s':''):'';
+}
+function overLimit(){return !S.licensed && (S.frames.length>FREE_FRAMES || S.maxw>FREE_MAXW)}
+function updateGate(){
+  $('go').disabled=S.frames.length<2;
+  if(S.licensed){$('freeNote').textContent='';return}
+  const parts=[];
+  parts.push(`frames ${S.frames.length}/${FREE_FRAMES}`);
+  parts.push(`width up to ${FREE_MAXW}px`);
+  const over=overLimit();
+  $('freeNote').textContent=`Free tier: ${parts.join(', ')}. Free GIFs get a small watermark.`+(over?' Over limit — will be capped.':'');
+  $('freeNote').style.color=over?'#f56':'var(--mut)';
+}
+function frameCanvas(bmp,W){
+  const scale=Math.min(1,W/bmp.width);
+  const w=Math.max(1,Math.round(bmp.width*scale)),h=Math.max(1,Math.round(bmp.height*scale));
+  const c=document.createElement('canvas');c.width=w;c.height=h;const x=c.getContext('2d');
+  x.imageSmoothingQuality='high';x.drawImage(bmp,0,0,w,h);
+  if(!S.licensed){
+    const t='loopine';x.font=`${Math.max(11,Math.round(w*0.045))}px -apple-system,sans-serif`;
+    const tw=x.measureText(t).width;const pad=6;
+    x.fillStyle='rgba(0,0,0,.45)';x.fillRect(w-tw-pad*2-4,h-24,tw+pad*2,20);
+    x.fillStyle='rgba(255,255,255,.9)';x.textBaseline='middle';x.fillText(t,w-tw-pad-4,h-14);
+  }
+  return c;
+}
+let WORKER_URL=null;
+async function getWorkerURL(){
+  if(WORKER_URL)return WORKER_URL;
+  const r=await fetch('https://cdn.jsdelivr.net/npm/gif.js.optimized@1.0.1/dist/gif.worker.js');
+  const b=await r.blob();WORKER_URL=URL.createObjectURL(b);return WORKER_URL;
+}
+$('go').onclick=async()=>{
+  if(S.frames.length<2){setStatus('Add at least 2 images.');return}
+  let frames=S.frames, maxw=S.maxw;
+  if(!S.licensed){frames=frames.slice(0,FREE_FRAMES);maxw=Math.min(maxw,FREE_MAXW);}
+  // target width = min(maxw, largest source width)
+  const srcMax=Math.max(...frames.map(f=>f.bmp.width));
+  const W=Math.min(maxw,srcMax);
+  const first=frameCanvas(frames[0].bmp,W);
+  $('go').disabled=true;$('dl').style.display='none';setStatus('Rendering…');
+  const wurl=await getWorkerURL();
+  const gif=new GIF({workers:2,quality:S.q,width:first.width,height:first.height,repeat:S.loop,workerScript:wurl});
+  const delay=Math.round(1000/S.fps);
+  for(const fr of frames){const c=frameCanvas(fr.bmp,W);
+    // force same dims as first
+    if(c.width!==first.width||c.height!==first.height){const c2=document.createElement('canvas');c2.width=first.width;c2.height=first.height;c2.getContext('2d').drawImage(c,0,0,first.width,first.height);gif.addFrame(c2,{delay});}
+    else gif.addFrame(c,{delay});
+  }
+  gif.on('progress',p=>{$('bar').style.width=Math.round(p*100)+'%';setStatus('Encoding '+Math.round(p*100)+'%…')});
+  gif.on('finished',blob=>{
+    S.lastBlob=blob;const url=URL.createObjectURL(blob);
+    $('preview').innerHTML=`<img src="${url}" alt="preview">`;
+    $('bar').style.width='0';$('go').disabled=false;
+    const dl=$('dl');dl.style.display='';dl.disabled=false;
+    dl.onclick=()=>{const a=document.createElement('a');a.href=url;a.download='loopine.gif';a.click();};
+    setStatus(`Done — ${frames.length} frames, ${first.width}×${first.height}, ${(blob.size/1024).toFixed(0)} KB. Nothing was uploaded.`);
+  });
+  gif.render();
+};
+// license
+async function validKeyLS(key){
+  try{const r=await fetch('https://api.lemonsqueezy.com/v1/licenses/validate',{method:'POST',headers:{'Accept':'application/json','Content-Type':'application/x-www-form-urlencoded'},body:new URLSearchParams({license_key:key.trim()})});const d=await r.json();return d.valid===true&&d.license_key&&d.license_key.status!=='disabled'&&d.license_key.status!=='expired';}catch(e){return false}
+}
+try{const s=localStorage.getItem('loopine_license');if(s)$('key').value=s;}catch(e){}
+$('apply').onclick=async()=>{
+  const k=$('key').value.trim();const st=$('keyStat');const p=$('planPill');
+  if(!k){st.textContent='Enter your license key.';st.style.color='#f56';return}
+  if(CHECKOUT_URL==="#"){st.textContent='License validation goes live at launch.';st.style.color='var(--mut)';return}
+  st.textContent='Checking…';st.style.color='var(--mut)';
+  const ok=await validKeyLS(k);S.licensed=ok;
+  p.textContent=ok?'PRO':'FREE';p.className='pill'+(ok?'':' free');
+  st.textContent=ok?'✓ Licensed — unlimited frames, full res, no watermark.':'Invalid or inactive key.';st.style.color=ok?'#3fbf8f':'#f56';
+  try{ok?localStorage.setItem('loopine_license',k):localStorage.removeItem('loopine_license');}catch(e){}
+  updateGate();
+};
+$('buy').onclick=e=>{if(CHECKOUT_URL==="#"){e.preventDefault();setStatus('Checkout link goes live at launch.')}else{$('buy').href=CHECKOUT_URL}};
+updateGate();
+</script>
+</body>
+</html>
