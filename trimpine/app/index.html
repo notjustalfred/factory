@@ -1,0 +1,264 @@
+<!doctype html><html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Trimpine &mdash; Trim &amp; cut audio in your browser. Nothing uploaded.</title>
+<meta name="description" content="Trim MP3/WAV/M4A audio right in your browser. No upload, no length limit, no ads. Export lossless WAV free; MP3 + fade + normalize with Pro.">
+<style>
+:root{--bg:#0e1116;--pan:#161b22;--line:#232a34;--txt:#e6edf3;--mut:#8b96a5;--acc:#4f9dff;--acc2:#2b6fd6;--ok:#3fbf8f;--bad:#f56565}
+*{box-sizing:border-box}html,body{margin:0}body{background:var(--bg);color:var(--txt);font:15px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
+header{display:flex;align-items:center;gap:12px;padding:14px 18px;border-bottom:1px solid var(--line)}
+.logo{font-weight:700;font-size:18px;letter-spacing:.2px}.logo b{color:var(--acc)}
+.pill{margin-left:6px;font-size:11px;font-weight:700;padding:3px 8px;border-radius:999px;background:var(--acc);color:#04101f}
+.pill.free{background:#2a3140;color:var(--mut)}
+.wrap{max-width:960px;margin:0 auto;padding:18px}
+.drop{border:2px dashed var(--line);border-radius:14px;padding:44px 20px;text-align:center;cursor:pointer;transition:.15s;background:var(--pan)}
+.drop.hot{border-color:var(--acc);background:#12223c}
+.drop b{color:var(--acc)}.muted{color:var(--mut)}
+.card{background:var(--pan);border:1px solid var(--line);border-radius:14px;padding:16px;margin-top:16px}
+.wave{width:100%;height:150px;background:#0a0d12;border-radius:10px;display:block;touch-action:none;cursor:ew-resize}
+.row{display:flex;flex-wrap:wrap;gap:12px;align-items:center;margin-top:12px}
+.row>div{display:flex;flex-direction:column;gap:4px}
+label.f{font-size:12px;color:var(--mut)}
+button,select,input[type=text]{font:inherit}
+.btn{background:var(--acc);color:#04101f;border:0;border-radius:9px;padding:10px 16px;font-weight:700;cursor:pointer}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.btn.sec{background:#232b37;color:var(--txt)}
+.btn.play{background:#232b37;color:var(--txt);min-width:96px}
+select{background:#0a0d12;color:var(--txt);border:1px solid var(--line);border-radius:8px;padding:8px}
+.time{font-variant-numeric:tabular-nums;font-size:13px;color:var(--mut)}
+.chk{display:flex;align-items:center;gap:8px;font-size:14px}
+.pro-tag{font-size:10px;font-weight:700;background:var(--acc);color:#04101f;padding:1px 6px;border-radius:6px}
+.lock{opacity:.55}
+#status{margin-top:12px;font-size:13px;color:var(--mut);min-height:18px}
+.gate{margin-top:16px;padding:14px;border:1px solid var(--line);border-radius:12px;background:#10151d}
+.gate h3{margin:0 0 6px;font-size:14px}
+.keyrow{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+.keyrow input{flex:1;min-width:200px;background:#0a0d12;color:var(--txt);border:1px solid var(--line);border-radius:8px;padding:9px}
+a.buy{color:var(--acc);font-weight:600;text-decoration:none}
+footer{text-align:center;color:var(--mut);font-size:12px;padding:26px 0}
+.hid{display:none}
+</style></head>
+<body>
+<header>
+  <div class="logo"><b>Trim</b>pine <span class="pill free" id="planPill">FREE</span></div>
+  <div style="margin-left:auto" class="muted">Runs 100% in your browser &mdash; nothing uploaded.</div>
+</header>
+<div class="wrap">
+  <div class="drop" id="drop">
+    <p style="font-size:17px;margin:.2em 0">Drop an audio file or <b>browse</b></p>
+    <p class="muted">MP3 &middot; WAV &middot; M4A &middot; AAC &middot; FLAC &middot; OGG &mdash; no size or length limit, nothing leaves your device.</p>
+    <input type="file" id="file" accept="audio/*,.mp3,.wav,.m4a,.aac,.flac,.ogg" class="hid">
+  </div>
+
+  <div class="card hid" id="editor">
+    <canvas class="wave" id="wave" width="1800" height="300"></canvas>
+    <div class="row">
+      <div><label class="f">Selection start</label><span class="time" id="tStart">0:00.000</span></div>
+      <div><label class="f">Selection end</label><span class="time" id="tEnd">0:00.000</span></div>
+      <div><label class="f">Length</label><span class="time" id="tLen">0:00.000</span></div>
+      <div style="flex-direction:row;gap:8px;margin-left:auto">
+        <button class="btn play" id="play">&#9654; Play sel</button>
+        <button class="btn sec" id="all">Select all</button>
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="chk lock" id="wrapFadeIn"><input type="checkbox" id="fadeIn"><label for="fadeIn">Fade in</label> <span class="pro-tag">PRO</span></div>
+      <div class="chk lock" id="wrapFadeOut"><input type="checkbox" id="fadeOut"><label for="fadeOut">Fade out</label> <span class="pro-tag">PRO</span></div>
+      <div class="chk lock" id="wrapNorm"><input type="checkbox" id="norm"><label for="norm">Normalize (peak)</label> <span class="pro-tag">PRO</span></div>
+    </div>
+
+    <div class="row">
+      <div>
+        <label class="f">Export format</label>
+        <select id="fmt">
+          <option value="wav">WAV &mdash; lossless (free)</option>
+          <option value="mp3">MP3 (Pro)</option>
+        </select>
+      </div>
+      <div id="brWrap" class="hid">
+        <label class="f">MP3 bitrate</label>
+        <select id="br"><option>128</option><option selected>192</option><option>256</option><option>320</option></select>
+      </div>
+      <div style="margin-left:auto;align-self:flex-end">
+        <button class="btn" id="go">Trim &amp; download</button>
+      </div>
+    </div>
+    <div id="status">Drag the handles on the waveform to set your clip.</div>
+  </div>
+
+  <div class="gate">
+    <h3>Trimpine Pro &mdash; one-time, lifetime</h3>
+    <div class="muted">Free: unlimited trimming + lossless <b>WAV</b> export. Pro unlocks <b>MP3 export</b> (128&ndash;320 kbps), <b>fade in/out</b>, and <b>normalize</b>. <a class="buy" id="buy" href="#" target="_blank" rel="noopener">Get a license &rarr;</a></div>
+    <div class="keyrow">
+      <input type="text" id="key" placeholder="Paste license key to unlock Pro">
+      <button class="btn sec" id="apply">Unlock</button>
+    </div>
+    <div id="keyStat" class="muted" style="margin-top:6px;font-size:13px"></div>
+  </div>
+</div>
+<footer>Trim &amp; cut audio in your browser &mdash; nothing uploaded.</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/lamejs@1.2.1/lame.min.js"></script>
+<script>
+const CHECKOUT_URL="#"; // Trimpine Lifetime License - set to LS checkout URL at launch
+const S={buf:null,sel:{a:0,b:0},licensed:false,playing:null,dur:0};
+const $=id=>document.getElementById(id);
+const ac=new (window.AudioContext||window.webkitAudioContext)();
+
+const drop=$('drop'),fileEl=$('file');
+drop.onclick=()=>fileEl.click();
+fileEl.onchange=e=>{if(e.target.files[0])load(e.target.files[0])};
+drop.ondragover=e=>{e.preventDefault();drop.classList.add('hot')};
+drop.ondragleave=()=>drop.classList.remove('hot');
+drop.ondrop=e=>{e.preventDefault();drop.classList.remove('hot');if(e.dataTransfer.files[0])load(e.dataTransfer.files[0])};
+
+async function load(f){
+  setStatus('Decoding '+f.name+' ...');
+  try{
+    const arr=await f.arrayBuffer();
+    const buf=await ac.decodeAudioData(arr.slice(0));
+    S.buf=buf;S.dur=buf.duration;S.sel={a:0,b:buf.duration};
+    $('editor').classList.remove('hid');
+    peaks=null;drawWave();updateTimes();
+    setStatus('Loaded - '+fmtTime(buf.duration)+', '+buf.numberOfChannels+' ch, '+buf.sampleRate+' Hz. Drag the handles to set your clip.');
+  }catch(err){setStatus('Could not decode this file: '+err.message);}
+}
+
+let peaks=null;
+function computePeaks(w){
+  const ch=S.buf.getChannelData(0);const n=S.buf.length;const p=new Float32Array(w);
+  const step=n/w;
+  for(let i=0;i<w;i++){let mx=0;const s=Math.floor(i*step),e=Math.min(n,Math.floor((i+1)*step));
+    for(let j=s;j<e;j++){const v=Math.abs(ch[j]);if(v>mx)mx=v;}p[i]=mx;}
+  peaks=p;
+}
+function drawWave(){
+  const c=$('wave'),x=c.getContext('2d'),W=c.width,H=c.height;
+  if(!peaks||peaks.length!==W)computePeaks(W);
+  x.clearRect(0,0,W,H);
+  const aX=S.sel.a/S.dur*W, bX=S.sel.b/S.dur*W;
+  x.fillStyle='rgba(79,157,255,.14)';x.fillRect(aX,0,bX-aX,H);
+  x.strokeStyle='#3a4656';x.beginPath();
+  for(let i=0;i<W;i++){const h=peaks[i]*H*0.92;x.moveTo(i,(H-h)/2);x.lineTo(i,(H+h)/2);}x.stroke();
+  x.strokeStyle='#4f9dff';
+  x.beginPath();
+  for(let i=Math.floor(aX);i<bX;i++){if(i<0||i>=W)continue;const h=peaks[i]*H*0.92;x.moveTo(i,(H-h)/2);x.lineTo(i,(H+h)/2);}x.stroke();
+  x.fillStyle='#4f9dff';x.fillRect(aX-2,0,4,H);x.fillRect(bX-2,0,4,H);
+}
+const wave=$('wave');let drag=null;
+function xToTime(clientX){const r=wave.getBoundingClientRect();let t=(clientX-r.left)/r.width*S.dur;return Math.max(0,Math.min(S.dur,t));}
+function nearest(t){const da=Math.abs(t-S.sel.a),db=Math.abs(t-S.sel.b);return da<db?'a':'b';}
+wave.addEventListener('pointerdown',e=>{const t=xToTime(e.clientX);drag=nearest(t);S.sel[drag]=t;normSel();wave.setPointerCapture(e.pointerId);drawWave();updateTimes();});
+wave.addEventListener('pointermove',e=>{if(!drag)return;S.sel[drag]=xToTime(e.clientX);normSel();drawWave();updateTimes();});
+wave.addEventListener('pointerup',()=>{drag=null});
+function normSel(){if(S.sel.a>S.sel.b){const t=S.sel.a;S.sel.a=S.sel.b;S.sel.b=t;drag=drag==='a'?'b':'a';}}
+$('all').onclick=()=>{S.sel={a:0,b:S.dur};drawWave();updateTimes();};
+
+function fmtTime(t){const m=Math.floor(t/60),s=Math.floor(t%60),ms=Math.floor((t*1000)%1000);return m+':'+String(s).padStart(2,'0')+'.'+String(ms).padStart(3,'0');}
+function updateTimes(){$('tStart').textContent=fmtTime(S.sel.a);$('tEnd').textContent=fmtTime(S.sel.b);$('tLen').textContent=fmtTime(S.sel.b-S.sel.a);}
+
+$('play').onclick=()=>{
+  if(S.playing){S.playing.stop();return;}
+  const src=ac.createBufferSource();src.buffer=S.buf;
+  const len=S.sel.b-S.sel.a;src.connect(ac.destination);
+  ac.resume();src.start(0,S.sel.a,len);S.playing=src;$('play').textContent='\u25A0 Stop';
+  src.onended=()=>{S.playing=null;$('play').textContent='\u25B6 Play sel';};
+};
+
+function sliceBuffer(){
+  const sr=S.buf.sampleRate, a=Math.floor(S.sel.a*sr), b=Math.floor(S.sel.b*sr);
+  const len=Math.max(1,b-a), chs=S.buf.numberOfChannels;
+  const out=ac.createBuffer(chs,len,sr);
+  const fadeIn=S.licensed&&$('fadeIn').checked, fadeOut=S.licensed&&$('fadeOut').checked, norm=S.licensed&&$('norm').checked;
+  const fadeN=Math.max(1,Math.floor(len*0.08));
+  let peak=0;
+  if(norm){for(let c=0;c<chs;c++){const d=S.buf.getChannelData(c);for(let i=a;i<b;i++){const v=Math.abs(d[i]);if(v>peak)peak=v;}}}
+  const gain=norm&&peak>0?(0.99/peak):1;
+  for(let c=0;c<chs;c++){
+    const src=S.buf.getChannelData(c), dst=out.getChannelData(c);
+    for(let i=0;i<len;i++){
+      let v=src[a+i]*gain;
+      if(fadeIn&&i<fadeN)v*=i/fadeN;
+      if(fadeOut&&i>len-fadeN)v*=(len-i)/fadeN;
+      dst[i]=v;
+    }
+  }
+  return out;
+}
+function encodeWav(buf){
+  const chs=buf.numberOfChannels, sr=buf.sampleRate, len=buf.length;
+  const bytesPerSample=2, blockAlign=chs*bytesPerSample, dataSize=len*blockAlign;
+  const ab=new ArrayBuffer(44+dataSize), v=new DataView(ab);
+  const wr=(o,s)=>{for(let i=0;i<s.length;i++)v.setUint8(o+i,s.charCodeAt(i));};
+  wr(0,'RIFF');v.setUint32(4,36+dataSize,true);wr(8,'WAVE');wr(12,'fmt ');
+  v.setUint32(16,16,true);v.setUint16(20,1,true);v.setUint16(22,chs,true);
+  v.setUint32(24,sr,true);v.setUint32(28,sr*blockAlign,true);v.setUint16(32,blockAlign,true);v.setUint16(34,16,true);
+  wr(36,'data');v.setUint32(40,dataSize,true);
+  let o=44;
+  for(let i=0;i<len;i++)for(let c=0;c<chs;c++){let s=Math.max(-1,Math.min(1,buf.getChannelData(c)[i]));v.setInt16(o,s<0?s*0x8000:s*0x7FFF,true);o+=2;}
+  return new Blob([ab],{type:'audio/wav'});
+}
+function encodeMp3(buf,kbps){
+  const chs=Math.min(2,buf.numberOfChannels), sr=buf.sampleRate;
+  const enc=new lamejs.Mp3Encoder(chs,sr,kbps);
+  const L=buf.getChannelData(0), R=chs>1?buf.getChannelData(1):null;
+  const len=buf.length, block=1152, data=[];
+  const to16=f=>{const o=new Int16Array(f.length);for(let i=0;i<f.length;i++){let s=Math.max(-1,Math.min(1,f[i]));o[i]=s<0?s*0x8000:s*0x7FFF;}return o;};
+  const l16=to16(L), r16=R?to16(R):null;
+  for(let i=0;i<len;i+=block){
+    const lc=l16.subarray(i,i+block), rc=r16?r16.subarray(i,i+block):null;
+    const buf8=chs>1?enc.encodeBuffer(lc,rc):enc.encodeBuffer(lc);
+    if(buf8.length)data.push(new Int8Array(buf8));
+  }
+  const end=enc.flush();if(end.length)data.push(new Int8Array(end));
+  return new Blob(data,{type:'audio/mpeg'});
+}
+
+$('fmt').onchange=e=>{
+  const mp3=e.target.value==='mp3';
+  $('brWrap').classList.toggle('hid',!mp3);
+  if(mp3&&!S.licensed){setStatus('MP3 export is a Pro feature - unlock below, or export WAV free.');}
+};
+
+$('go').onclick=async()=>{
+  if(!S.buf)return;
+  if(S.sel.b-S.sel.a<0.01){setStatus('Selection is empty - drag the handles to pick a clip.');return;}
+  const fmt=$('fmt').value;
+  if(fmt==='mp3'&&!S.licensed){setStatus('MP3 export is Pro. Unlock below, or switch format to WAV (free).');return;}
+  $('go').disabled=true;setStatus('Processing...');
+  await new Promise(r=>setTimeout(r,20));
+  try{
+    const out=sliceBuffer();
+    let blob,name;
+    if(fmt==='mp3'){blob=encodeMp3(out,parseInt($('br').value,10));name='trimpine-clip.mp3';}
+    else{blob=encodeWav(out);name='trimpine-clip.wav';}
+    const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;a.click();
+    setStatus('Done - '+name+' ('+(blob.size/1024/1024).toFixed(2)+' MB). Nothing was uploaded.');
+  }catch(err){setStatus('Export failed: '+err.message);}
+  $('go').disabled=false;
+};
+function setStatus(t){$('status').textContent=t}
+
+function setPro(on){
+  S.licensed=on;
+  $('planPill').textContent=on?'PRO':'FREE';$('planPill').className='pill'+(on?'':' free');
+  ['wrapFadeIn','wrapFadeOut','wrapNorm'].forEach(id=>$(id).classList.toggle('lock',!on));
+  ['fadeIn','fadeOut','norm'].forEach(id=>$(id).disabled=!on);
+}
+async function validKeyLS(key){
+  try{const r=await fetch('https://api.lemonsqueezy.com/v1/licenses/validate',{method:'POST',headers:{'Accept':'application/json','Content-Type':'application/x-www-form-urlencoded'},body:new URLSearchParams({license_key:key.trim()})});const d=await r.json();return d.valid===true&&d.license_key&&d.license_key.status!=='disabled'&&d.license_key.status!=='expired';}catch(e){return false}
+}
+try{const s=localStorage.getItem('trimpine_license');if(s)$('key').value=s;}catch(e){}
+$('apply').onclick=async()=>{
+  const k=$('key').value.trim();const st=$('keyStat');
+  if(!k){st.textContent='Enter your license key.';st.style.color='var(--bad)';return}
+  if(CHECKOUT_URL==="#"){st.textContent='License validation goes live at launch.';st.style.color='var(--mut)';return}
+  st.textContent='Checking...';st.style.color='var(--mut)';
+  const ok=await validKeyLS(k);setPro(ok);
+  st.textContent=ok?'\u2713 Licensed - MP3, fade & normalize unlocked.':'Invalid or inactive key.';st.style.color=ok?'var(--ok)':'var(--bad)';
+  try{ok?localStorage.setItem('trimpine_license',k):localStorage.removeItem('trimpine_license');}catch(e){}
+};
+$('buy').onclick=e=>{if(CHECKOUT_URL==="#"){e.preventDefault();setStatus('Checkout link goes live at launch.')}else{$('buy').href=CHECKOUT_URL}};
+setPro(false);
+</script>
+</body></html>
