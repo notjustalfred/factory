@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Slimpine — Batch compress images to an exact size, 100% in your browser</title>
+<script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/heic2any@0.0.4/dist/heic2any.min.js"></script>
+<style>
+  :root{--bg:#0f1214;--panel:#171b1e;--line:#262c30;--txt:#e7ecee;--mut:#94a1a6;--acc:#2f8fd6;}
+  *{box-sizing:border-box}
+  body{margin:0;font:14px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;background:var(--bg);color:var(--txt);height:100vh;display:flex;flex-direction:column}
+  header{display:flex;align-items:center;gap:10px;padding:10px 16px;border-bottom:1px solid var(--line)}
+  header b{font-size:16px}.tag{color:var(--mut);font-size:12px}
+  .wrap{flex:1;display:flex;min-height:0}
+  aside{width:310px;padding:14px;border-right:1px solid var(--line);overflow:auto;background:var(--panel)}
+  main{flex:1;display:flex;flex-direction:column;min-width:0}
+  #drop{margin:14px;border:2px dashed var(--line);border-radius:12px;padding:34px 12px;text-align:center;color:var(--mut);cursor:pointer}
+  #drop.hot{border-color:var(--acc);color:var(--txt)}
+  #list{flex:1;overflow:auto;padding:0 14px 14px}
+  .file{display:flex;align-items:center;gap:10px;padding:8px;border:1px solid var(--line);border-radius:8px;margin-bottom:8px}
+  .file img{width:44px;height:44px;object-fit:cover;border-radius:5px;background:#000}
+  .file .meta{flex:1;min-width:0}
+  .file .n{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .file .d{color:var(--mut);font-size:12px}
+  .file .d b{color:#3fbf8f;font-weight:600}
+  .file .rm{color:var(--mut);cursor:pointer;padding:4px 8px}
+  .row{margin-bottom:14px}
+  label{display:block;color:var(--mut);font-size:12px;margin-bottom:5px}
+  .sub{font-size:11px;color:var(--mut);text-transform:uppercase;letter-spacing:.5px;margin:16px 0 8px;border-top:1px solid var(--line);padding-top:14px}
+  input[type=range]{width:100%;accent-color:var(--acc)}
+  input[type=text],input[type=number],select{background:var(--bg);border:1px solid var(--line);color:var(--txt);padding:7px;border-radius:6px;width:100%}
+  .seg{display:flex;gap:6px}.seg button{flex:1;padding:7px;background:var(--bg);border:1px solid var(--line);color:var(--txt);border-radius:6px;cursor:pointer;font-size:12px}
+  .seg button.on{background:var(--acc);border-color:var(--acc)}
+  .cust{display:flex;gap:6px;align-items:center;margin-top:6px}
+  .btn{width:100%;padding:12px;background:var(--acc);border:none;color:#fff;font-weight:600;border-radius:8px;cursor:pointer;font-size:14px}
+  .btn:disabled{opacity:.5;cursor:default}
+  .btn.sec{background:var(--bg);border:1px solid var(--line)}
+  .keyrow{display:flex;gap:6px}
+  .hint{font-size:11px;color:var(--mut);margin-top:6px}
+  .pill{font-size:10px;padding:2px 7px;border-radius:20px;background:var(--acc);color:#fff}
+  .pill.free{background:#3a4147}
+  #status{padding:10px 16px;border-top:1px solid var(--line);color:var(--mut);font-size:13px;min-height:20px}
+  #bar{height:4px;background:var(--acc);width:0;transition:width .2s}
+  #freeNote{font-size:11px;color:var(--mut);margin-top:8px}
+  a{color:var(--acc)}
+</style>
+</head>
+<body>
+<header>
+  <b>◔ Slimpine</b><span class="tag">Compress to an exact size — 100% in your browser, nothing uploaded</span>
+  <span style="flex:1"></span><span id="count" class="tag"></span>
+  <span id="planPill" class="pill free">FREE</span>
+</header>
+<div class="wrap">
+  <aside>
+    <div class="sub" style="margin-top:0;border:0;padding:0">Compression mode</div>
+    <div class="seg" id="mode">
+      <button data-m="quality" class="on">Quality</button>
+      <button data-m="target">Target size</button>
+    </div>
+
+    <div id="qualityBox">
+      <div class="row" style="margin-top:12px">
+        <label>Quality — <span id="qval">80</span>%</label>
+        <input type="range" id="q" min="30" max="100" value="80">
+      </div>
+    </div>
+
+    <div id="targetBox" style="display:none">
+      <div class="row" style="margin-top:12px">
+        <label>Target size per image</label>
+        <div class="cust">
+          <input type="number" id="tsize" value="200" min="5" style="flex:1">
+          <select id="tunit" style="width:78px"><option>KB</option><option>MB</option></select>
+        </div>
+        <div class="hint">Slimpine auto-tunes quality per image to land at or under your target.</div>
+      </div>
+    </div>
+
+    <div class="sub">Output format</div>
+    <div class="seg" id="fmt">
+      <button data-f="image/jpeg" class="on">JPEG</button>
+      <button data-f="image/webp">WebP</button>
+      <button data-f="image/avif">AVIF</button>
+    </div>
+    <div class="hint" id="fmtHint">JPEG — universal. WebP ≈30% smaller. AVIF smallest (modern browsers).</div>
+
+    <div class="sub">Max dimension (optional)</div>
+    <div class="cust">
+      <input type="number" id="maxdim" placeholder="e.g. 1920" min="0">
+      <span class="tag">px longest side</span>
+    </div>
+    <div class="hint">Leave blank to keep original dimensions.</div>
+
+    <div class="sub">Filename</div>
+    <input type="text" id="pat" value="{name}-min">
+    <div class="hint">Tokens: {name}</div>
+
+    <div class="sub">License</div>
+    <div class="keyrow"><input type="text" id="key" placeholder="paste license key"><button class="btn sec" style="width:auto" id="apply">Apply</button></div>
+    <div id="lstatus" class="hint"></div>
+    <div class="hint">No key? <a href="#" id="buy" target="_blank">Get a lifetime license — $29, one-time</a></div>
+    <div id="freeNote"></div>
+  </aside>
+
+  <main>
+    <div id="drop">Drop images here or click to choose — JPG · PNG · WebP · HEIC. Nothing is uploaded.</div>
+    <input type="file" id="fi" accept="image/*,.heic,.heif" multiple style="display:none">
+    <div id="list"></div>
+    <button class="btn" id="go" style="margin:0 14px 14px" disabled>Compress &amp; download ZIP</button>
+    <div id="bar"></div>
+    <div id="status">Ready.</div>
+  </main>
+</div>
+<script>
+const CHECKOUT_URL="#"; // Slimpine Lifetime License — set to LS checkout URL at launch
+const FREE_LIMIT=10;
+const S={files:[],mode:"quality",q:0.8,fmt:"image/jpeg",tsize:200,tunit:"KB",maxdim:0,pat:"{name}-min",licensed:false};
+
+const $=id=>document.getElementById(id);
+const drop=$('drop'),fi=$('fi'),listEl=$('list');
+
+drop.onclick=()=>fi.click();
+drop.ondragover=e=>{e.preventDefault();drop.classList.add('hot')};
+drop.ondragleave=()=>drop.classList.remove('hot');
+drop.ondrop=e=>{e.preventDefault();drop.classList.remove('hot');addFiles(e.dataTransfer.files)};
+fi.onchange=()=>addFiles(fi.files);
+
+async function addFiles(fl){
+  for(const f of fl){
+    if(!/^image\//.test(f.type) && !/\.(heic|heif)$/i.test(f.name)) continue;
+    S.files.push({file:f,name:f.name.replace(/\.[^.]+$/,''),origSize:f.size,outSize:null,thumb:null});
+  }
+  render();
+  // build thumbs lazily
+  for(const it of S.files){ if(!it.thumb) it.thumb=await makeThumb(it.file); }
+  render();
+}
+
+async function decodeToImage(file){
+  let blob=file;
+  if(/\.(heic|heif)$/i.test(file.name)||file.type==='image/heic'||file.type==='image/heif'){
+    blob=await heic2any({blob:file,toType:'image/jpeg',quality:0.92});
+  }
+  const url=URL.createObjectURL(blob);
+  const img=new Image();
+  await new Promise((res,rej)=>{img.onload=res;img.onerror=rej;img.src=url});
+  return {img,url};
+}
+
+async function makeThumb(file){
+  try{
+    const {img,url}=await decodeToImage(file);
+    const c=document.createElement('canvas');const s=44;
+    c.width=s;c.height=s;const ctx=c.getContext('2d');
+    const r=Math.max(s/img.width,s/img.height);
+    const w=img.width*r,h=img.height*r;
+    ctx.drawImage(img,(s-w)/2,(s-h)/2,w,h);
+    URL.revokeObjectURL(url);
+    return c.toDataURL('image/jpeg',0.7);
+  }catch(e){return null}
+}
+
+function human(n){return n<1024?n+' B':n<1048576?(n/1024).toFixed(0)+' KB':(n/1048576).toFixed(2)+' MB';}
+
+function render(){
+  listEl.innerHTML='';
+  S.files.forEach((it,i)=>{
+    const d=document.createElement('div');d.className='file';
+    let sub=human(it.origSize);
+    if(it.outSize!=null){const pct=Math.round((1-it.outSize/it.origSize)*100);sub+=` → <b>${human(it.outSize)}</b> (−${pct}%)`;}
+    d.innerHTML=`<img src="${it.thumb||''}"><div class="meta"><div class="n">${it.name}</div><div class="d">${sub}</div></div><div class="rm" data-i="${i}">✕</div>`;
+    listEl.appendChild(d);
+  });
+  listEl.querySelectorAll('.rm').forEach(x=>x.onclick=()=>{S.files.splice(+x.dataset.i,1);render()});
+  $('count').textContent=S.files.length?`${S.files.length} image${S.files.length>1?'s':''}`:'';
+  $('go').disabled=S.files.length===0;
+  const over=!S.licensed && S.files.length>FREE_LIMIT;
+  $('go').disabled=S.files.length===0||over;
+  $('freeNote').textContent=S.licensed?'':`Free tier: up to ${FREE_LIMIT} images per batch (${S.files.length}/${FREE_LIMIT}).`;
+  if(over){$('freeNote').textContent=`Free tier is ${FREE_LIMIT} images/batch. Remove ${S.files.length-FREE_LIMIT} or get a lifetime license for unlimited.`;}
+}
+
+// controls
+$('mode').querySelectorAll('button').forEach(b=>b.onclick=()=>{
+  $('mode').querySelectorAll('button').forEach(x=>x.classList.remove('on'));b.classList.add('on');
+  S.mode=b.dataset.m;
+  $('qualityBox').style.display=S.mode==='quality'?'':'none';
+  $('targetBox').style.display=S.mode==='target'?'':'none';
+});
+$('q').oninput=e=>{S.q=+e.target.value/100;$('qval').textContent=e.target.value};
+$('fmt').querySelectorAll('button').forEach(b=>b.onclick=()=>{
+  $('fmt').querySelectorAll('button').forEach(x=>x.classList.remove('on'));b.classList.add('on');S.fmt=b.dataset.f;
+});
+$('tsize').oninput=e=>S.tsize=+e.target.value;
+$('tunit').onchange=e=>S.tunit=e.target.value;
+$('maxdim').oninput=e=>S.maxdim=+e.target.value||0;
+$('pat').oninput=e=>S.pat=e.target.value;
+
+function drawScaled(img){
+  let w=img.width,h=img.height;
+  if(S.maxdim>0 && Math.max(w,h)>S.maxdim){const r=S.maxdim/Math.max(w,h);w=Math.round(w*r);h=Math.round(h*r);}
+  const c=document.createElement('canvas');c.width=w;c.height=h;
+  const ctx=c.getContext('2d');ctx.imageSmoothingQuality='high';ctx.drawImage(img,0,0,w,h);
+  return c;
+}
+function toBlob(canvas,fmt,q){return new Promise(res=>canvas.toBlob(res,fmt,q));}
+
+async function compressOne(it){
+  const {img,url}=await decodeToImage(it.file);
+  const canvas=drawScaled(img);
+  let fmt=S.fmt,blob;
+  // AVIF/WebP support check — fall back to jpeg if browser can't encode
+  if(fmt!=='image/jpeg'){
+    const test=await toBlob(canvas,fmt,0.8);
+    if(!test||test.type!==fmt){fmt='image/jpeg';}
+  }
+  if(S.mode==='quality'){
+    blob=await toBlob(canvas,fmt,fmt==='image/png'?undefined:S.q);
+  } else {
+    // target size — binary search quality
+    const targetBytes=S.tsize*(S.tunit==='MB'?1048576:1024);
+    let lo=0.3,hi=0.98,best=null;
+    for(let i=0;i<8;i++){
+      const mid=(lo+hi)/2;
+      const b=await toBlob(canvas,fmt,mid);
+      if(!b){break;}
+      if(b.size<=targetBytes){best=b;lo=mid;} else {hi=mid;}
+    }
+    if(!best){best=await toBlob(canvas,fmt,0.3);} // smallest attainable
+    blob=best;
+  }
+  URL.revokeObjectURL(url);
+  return {blob,fmt};
+}
+
+$('go').onclick=async()=>{
+  const list=S.licensed?S.files:S.files.slice(0,FREE_LIMIT);
+  $('go').disabled=true;setStatus('Compressing…');
+  const zip=new JSZip();const ext={'image/jpeg':'jpg','image/webp':'webp','image/avif':'avif'};
+  for(let i=0;i<list.length;i++){
+    const it=list[i];setStatus(`Compressing ${i+1}/${list.length}: ${it.name}…`);
+    $('bar').style.width=((i/list.length)*100)+'%';
+    try{
+      const {blob,fmt}=await compressOne(it);
+      it.outSize=blob.size;
+      const nm=S.pat.replace('{name}',it.name)+'.'+(ext[fmt]||'jpg');
+      zip.file(nm,blob);
+    }catch(e){console.error(e);setStatus('Error on '+it.name+': '+e.message);}
+    render();
+  }
+  $('bar').style.width='100%';
+  setStatus('Packaging ZIP…');
+  const out=await zip.generateAsync({type:'blob'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(out);a.download='slimpine-compressed.zip';a.click();
+  setTimeout(()=>URL.revokeObjectURL(a.href),4000);
+  const total=list.reduce((s,x)=>s+(x.outSize||0),0),orig=list.reduce((s,x)=>s+x.origSize,0);
+  setStatus(`Done — ${list.length} image(s), ${human(orig)} → ${human(total)} (−${Math.round((1-total/orig)*100)}%).`);
+  $('bar').style.width='0';$('go').disabled=false;
+};
+
+function setStatus(t){$('status').textContent=t;}
+
+// license — live Lemon Squeezy validation (public endpoint, no secret key)
+async function validKeyLS(key){
+  try{const r=await fetch('https://api.lemonsqueezy.com/v1/licenses/validate',{method:'POST',headers:{'Accept':'application/json','Content-Type':'application/x-www-form-urlencoded'},body:new URLSearchParams({license_key:key.trim()})});const d=await r.json();return d.valid===true&&d.license_key&&d.license_key.status!=='disabled'&&d.license_key.status!=='expired';}catch(e){return false}
+}
+try{const s=localStorage.getItem('slimpine_license');if(s){$('key').value=s;S.licensed=true;$('planPill').textContent='PRO';$('planPill').classList.remove('free');}}catch(e){}
+$('apply').onclick=async()=>{
+  const k=$('key').value.trim(),st=$('lstatus');
+  if(!k){st.textContent='Enter your license key.';st.style.color='#f56';return}
+  if(CHECKOUT_URL==="#"){st.textContent='License validation goes live at launch.';st.style.color='var(--mut)';return}
+  st.textContent='Checking…';st.style.color='var(--mut)';
+  const ok=await validKeyLS(k);S.licensed=ok;
+  $('planPill').textContent=ok?'PRO':'FREE';$('planPill').classList.toggle('free',!ok);
+  st.textContent=ok?'✓ Licensed — unlimited batch unlocked.':'Invalid or inactive key.';st.style.color=ok?'#3fbf8f':'#f56';
+  try{ok?localStorage.setItem('slimpine_license',k):localStorage.removeItem('slimpine_license');}catch(e){}
+  render();
+};
+$('buy').onclick=e=>{if(CHECKOUT_URL==="#"){e.preventDefault();setStatus('Checkout link goes live at launch.')}else{$('buy').href=CHECKOUT_URL}};
+render();
+</script>
+</body>
+</html>

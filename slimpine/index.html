@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Slimpine — Batch compress images to an exact size, 100% in your browser</title>
+<style>
+ :root{--acc:#2f8fd6;--bg:#0d0f10;--txt:#e8ebec;--mut:#95a1a5}
+ *{box-sizing:border-box;margin:0}body{font:16px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:var(--bg);color:var(--txt)}
+ .wrap{max-width:1040px;margin:0 auto;padding:0 24px}
+ header{padding:20px 0;display:flex;align-items:center;gap:10px}header b{font-size:20px}
+ .cta{background:var(--acc);color:#fff;padding:12px 22px;border-radius:10px;text-decoration:none;font-weight:600;display:inline-block}
+ .cta.sec{background:#1a1e20;border:1px solid #2a3033}
+ .hero{text-align:center;padding:70px 0 40px}
+ .hero h1{font-size:clamp(32px,5vw,54px);line-height:1.1;letter-spacing:-1px;margin-bottom:18px}
+ .hero p{font-size:20px;color:var(--mut);max-width:660px;margin:0 auto 30px}
+ .badge{display:inline-block;background:#0f1d29;border:1px solid #234763;color:#8fc4e8;padding:6px 14px;border-radius:20px;font-size:13px;margin-bottom:24px}
+ .demo{margin:40px auto;border-radius:14px;border:1px solid #222;background:linear-gradient(135deg,#123a5a,#2f8fd6);padding:60px;text-align:center;color:#fff}
+ .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;padding:50px 0}
+ .card{background:#111517;border:1px solid #1d2325;border-radius:12px;padding:24px}
+ .card h3{margin-bottom:8px}.card p{color:var(--mut);font-size:15px}
+ .price{text-align:center;padding:50px 0}
+ .plan{max-width:400px;margin:20px auto;background:#111517;border:2px solid var(--acc);border-radius:16px;padding:34px}
+ .plan .amt{font-size:48px;font-weight:700}.plan .amt s{font-size:24px;color:var(--mut);font-weight:400}
+ .plan ul{list-style:none;text-align:left;margin:20px 0}.plan li{padding:6px 0}.plan li:before{content:"✓ ";color:#3fbf8f}
+ footer{text-align:center;color:var(--mut);padding:40px 0;font-size:14px}
+ .ltd{background:#0f1d29;border:1px solid #234763;border-radius:12px;padding:14px;color:#8fc4e8;font-size:14px;margin-top:16px}
+ @media(max-width:720px){.grid{grid-template-columns:1fr}}
+</style></head><body>
+<div class="wrap">
+ <header><b>◔ Slimpine</b><span style="flex:1"></span>
+   <a class="cta sec" href="app/">Open the app</a></header>
+
+ <section class="hero">
+   <span class="badge">◆ Lifetime deal — no subscription, ever</span>
+   <h1>Compress a whole folder<br>to an exact size.</h1>
+   <p>Type the size you need — "under 200 KB", "under 50 KB" — and Slimpine auto-tunes quality for every image to land there, in one batch. JPEG, WebP, or AVIF. 100% in your browser: no upload, no 20-file cap, no accounts.</p>
+   <a class="cta" href="app/">Open the app →</a>
+   <div class="demo"><div style="background:#111517;border-radius:8px;padding:34px;box-shadow:0 20px 60px rgba(0,0,0,.4);display:inline-block;color:#fff">drop a folder → every image under your KB target → one zip</div></div>
+ </section>
+
+ <section class="grid">
+   <div class="card"><h3>🎯 Exact size, in batch</h3><p>Set a KB or MB target and Slimpine binary-searches quality per image to hit it. Perfect for upload limits, LinkedIn, email, and ATS forms — for a whole folder at once, not one file at a time.</p></div>
+   <div class="card"><h3>🔒 100% private</h3><p>Runs entirely on your device using Canvas encoding. Nothing is uploaded, nothing is stored on a server, works offline.</p></div>
+   <div class="card"><h3>♾️ No file caps</h3><p>No 20-image limit, no 5 MB rejection, no waiting on a timer. The only limit is your device's memory.</p></div>
+   <div class="card"><h3>🆕 Modern formats</h3><p>Export JPEG, WebP (≈30% smaller), or AVIF (smallest). Automatic fallback if a browser can't encode the format you pick.</p></div>
+   <div class="card"><h3>📱 HEIC, handled</h3><p>Drop iPhone HEIC files straight in — they're decoded and compressed alongside everything else.</p></div>
+   <div class="card"><h3>⚡ Batch everything</h3><p>Quality or target mode, optional max-dimension resize, batch rename, one-click ZIP download.</p></div>
+ </section>
+
+ <section class="price">
+   <h2>One price. Forever.</h2>
+   <div class="plan">
+     <div class="amt"><s>$49</s> $29</div>
+     <div style="color:var(--mut)">lifetime license · one-time</div>
+     <ul>
+       <li>Unlimited batch size</li>
+       <li>Exact target-size mode</li>
+       <li>JPEG / WebP / AVIF export</li>
+       <li>HEIC decode + max-dimension resize</li>
+       <li>All future v1 updates</li>
+     </ul>
+     <a class="cta" style="width:100%;text-align:center" href="#" id="buy">Get the lifetime deal</a>
+     <div class="ltd">▲ Private LTD — limited launch pricing. One-time $29, no subscription. Secure checkout via Lemon Squeezy.</div>
+   </div>
+ </section>
+ <footer>Slimpine — batch compress images to an exact size, 100% in your browser.</footer>
+</div></body></html>
